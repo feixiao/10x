@@ -1,0 +1,4 @@
+food 12.50
+travel 20.00
+FOOD 7.50
+broken

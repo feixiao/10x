@@ -2,7 +2,7 @@
 
 想直接跟着操作，可从 [两个 Agent 并行开发的练习](./STEP_BY_STEP.md) 开始。
 
-核对环境：本机 Pi 1.1.0，`pi list` 显示未安装扩展包。此页是 [通用工具选型与研究证据](./AI_WORKFLOWS.md) 的 Pi 使用版，不涉及开发编排器。具体 CLI 选项以 [Pi 命令行文档](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/cli.md) 和本机 `pi --help` 为准。
+核对环境：本机 Pi 1.1.0，`pi list` 显示未安装扩展包。此页是 [通用工具选型与研究证据](./AI_WORKFLOWS.md) 的 Pi 使用版，不涉及开发编排器。具体 CLI 选项以 [Pi 命令行文档](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/cli.md) 和本机 `pi --help` 为准。另可参考 [WquGuru 的 Pi Coding Agent 指南](https://x.com/wquguru/article/2056235143623495975)：其中 plan-first、将调试和测试 SOP 固化为 Skill、逐步安装扩展的建议，已按通用工作流整理在[跨工具实践指南](./AGENT_ENGINEERING_GUIDE.md)。文章中的模型配置和单次工程经验属于作者实测记录，采用前需核对当前版本，不视为提效基准。
 
 ## 先用一个 Pi 完成闭环
 

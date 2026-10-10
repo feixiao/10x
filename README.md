@@ -4,6 +4,8 @@
 
 ## 从哪里开始
 
+- [跨工具实践指南](./AGENT_ENGINEERING_GUIDE.md)：Agent 交付闭环、并行边界、权限和效果衡量；附 C++、Go、Python 实操项目。
+- [C++、Go、Python 动手实验](./agent-lab/README.md)：本机可构建的三个同规格费用汇总 CLI，用 Agent 完成类别筛选，并运行各语言测试与验收命令。
 - [现成工具与证据](./AI_WORKFLOWS.md)：已有研究说明了什么；何时用单 Agent、独立审查或多 Agent，以及 Claude Code 可直接使用的能力。
 - [Pi 使用版](./PI_WORKFLOWS.md)：Pi 单会话、只读审查、独立 worktree 会话和集成验收。本机核对版本为 Pi 1.1.0。
 - [动手练习](./STEP_BY_STEP.md)：从全新 Go 项目开始，先审阅三文件计划，再由两个 Agent 分工开发、单测、集成与独立验收；该练习不测提效。
