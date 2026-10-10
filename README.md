@@ -10,6 +10,8 @@
 - [动手练习](./STEP_BY_STEP.md)：从全新 Go 项目开始，先审阅三文件计划，再由两个 Agent 分工开发、单测、集成与独立验收；该练习不测提效。
 - [1~2 小时重构实战指南 (omp + planning-with-files)](./REFACTORING_WITH_PLANNING_FILES_GUIDE.md)：基于磁盘状态机与退出门禁（Stop Gate）的单会话自主可控重构落地指南。
 - [OpenHands 本地部署与使用指南 (配合 LMStudio)](./OPENHANDS_LOCAL_LMSTUDIO_GUIDE.md)：基于 Docker 沙盒环境与本地模型 API 的部署与避坑实践指南。
+- [无人值守任务规格与验收契约规范 (Task Spec Template)](./TASK_SPEC_TEMPLATE.md)：防范围蔓延、破坏性重构与测试篡改的标准化任务拆解与黄金行为锁模板。
+- [24小时 Agent 产出高效审查与验收 SOP](./AGENT_DIFF_REVIEW_GUIDE.md)：15 分钟内快速定位风险、扫描作弊隐患并安全合并无人值守代码的审查流程。
 
 ## 当前工作假设（待真实任务验证）
 
