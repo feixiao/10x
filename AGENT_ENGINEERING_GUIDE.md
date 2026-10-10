@@ -1,6 +1,16 @@
 # 用编码 Agent 提效：跨工具实践指南
 
-本文补充 [现成工具与证据](./AI_WORKFLOWS.md) 和 [Pi 使用版](./PI_WORKFLOWS.md)，聚焦如何把编码 Agent 放进研发流程。覆盖 IDE、终端、云端和自托管 Agent；产品能力按官方文档描述，流程建议是工程判断，不代表已有实证提效。仓库附有 [C++、Go、Python 动手实验](./agent-lab/README.md)，可直接构建、运行测试并用 Agent 重做同一项功能。
+本文聚焦如何把编码 Agent 放进研发流程，整理公开实证、工具能力与工程规范。覆盖 IDE、终端、云端和自托管 Agent；产品能力按官方文档核对，流程建议是工程判断。仓库附有 [C++、Go、Python 动手实验](./agent-lab/README.md)，可直接构建、运行测试并用 Agent 重做同一项功能。
+
+## 1. 已有实证与证据边界
+
+评估 Agent 是否“提效”前，需厘清公开研究的测量对象与适用边界：
+
+- **[GitHub Copilot 受控实验](https://arxiv.org/abs/2302.06590)**：限定的 JavaScript HTTP 服务入门任务中，AI 组完成速度快 55.8%。这支持边界清晰的绿地任务提效，不代表大型复杂遗留工程。
+- **[Microsoft 等三项现场实验](https://www.microsoft.com/en-us/research/publication/the-effects-of-generative-ai-on-high-skilled-work-evidence-from-three-field-experiments-with-software-developers/)**：合并 4,867 名开发者，获得代码补全助手的一组完成任务数增加 26.08%（标准误 10.3%）。研究对象是行内代码补全，而非全自主多 Agent。
+- **[METR 2025 随机实验](https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/) 与 [2026 年更新](https://metr.org/blog/2026-02-24-uplift-update/)**：16 位熟悉大型开源仓库的开发者在 246 项真实任务上，使用当时工具平均耗时反而增加 19%。2026 年后续样本虽出现提速迹象（原样本估计耗时下降 18%，新招募者下降 4%），但置信区间均覆盖“无效果”。研究者指出样本选择与并行 Agent 计时的复杂性，无法证明跨任务稳定提速。
+
+**核心认知**：当前不存在放之四海皆准的“多 Agent 提速 X%”公理。任务粒度、测试完备度、审查返工与上下文维护成本直接决定最终收益。
 
 ## 先选工作方式，再选产品
 
@@ -20,8 +30,8 @@
 - [Gemini CLI](https://google-gemini.github.io/gemini-cli/docs/) 是开源终端 Agent，文档列出文件、shell、MCP、扩展和可信目录等能力。
 - [Aider 使用指南](https://aider.chat/docs/usage.html)说明其围绕本地 Git 仓库的结对编程方式，以及文件选择和代码修改工作流。
 - [OpenHands 文档](https://docs.all-hands.dev/)覆盖开源软件开发 Agent 的使用与部署。
-- [Pi 使用版](./PI_WORKFLOWS.md)讲解 Pi 的会话、工具限制和多 worktree 操作；[Claude Code 使用版](./AI_WORKFLOWS.md)覆盖其子 Agent、批处理与 Agent Teams。
-
+- **Pi**：极简终端 Agent，默认提供 `read, bash, edit, write`，原生不内置子 Agent 管理。可用 `--tools read,grep,find,ls --print` 开启只读审查会话；多任务并行依赖多 worktree；注意 `pi --mode json` 下 Agent 内部失败不一定导致退出码非零，需校验事件流中的状态字段。
+- **Claude Code**：内置子 Agent、独立 worktree 批处理（`/batch`）、交互式 Agent 团队（实验性 `Agent Teams`）与 PR 自动修复（`/autofix-pr`）。
 以上资料能证明工具提供了哪些交互和运行方式，不能证明它们会在某个团队或仓库提升多少速度。
 
 ## 通用交付闭环
@@ -120,7 +130,7 @@ Pi 指南作者 [WquGuru 的 Pi Coding Agent 指南（2026-05-18）](https://x.c
 - Agent 改动量、人工修改量、额外测试维护成本。
 - 工具费用、基础设施时间、权限与维护成本。
 
-优先比较同类任务的中位数和分布，按任务难度、开发者经验和仓库测试条件分层。记录失败和负收益任务；不要只计 Agent 编码时间、挑选容易成功的例子或把同时使用 Agent 与其他流程变化的结果归功于 Agent。小样本用于找到流程瓶颈，不足以声称因果关系或可推广的提效百分比。有关外部研究局限见 [AI_WORKFLOWS.md](./AI_WORKFLOWS.md)。
+优先比较同类任务的中位数和分布，按任务难度、开发者经验和仓库测试条件分层。记录失败和负收益任务；不要只计 Agent 编码时间、挑选容易成功的例子或把同时使用 Agent 与其他流程变化的结果归功于 Agent。小样本用于找到流程瓶颈，不足以声称因果关系或可推广的提效百分比。
 
 ## 建议起步路径
 

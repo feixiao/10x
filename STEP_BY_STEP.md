@@ -29,7 +29,7 @@ go mod init example.com/wordfreq
 
 > 只读规划，不修改文件。目标是实现本指南定义的 wordfreq CLI。请按上面三个任务列出：文件归属、共享 Go 接口、依赖顺序、每个任务的单测命令、最终验收命令和失败处理。保持两个编码任务可独立执行；不要自行更改已给出的行为契约。等我确认计划后，再把计划写入 task_plan.md，把接口决策写入 findings.md，把任务和测试日志框架写入 progress.md。
 
-检查返回的 plan 是否满足契约。确认后，让同一 Agent 写入 `task_plan.md`（阶段与待办）、`findings.md`（接口与设计决定）、`progress.md`（执行和测试结果）；这是 [planning-with-files 的三文件模式](https://github.com/OthmanAdi/planning-with-files#the-3-file-pattern)。Claude Code 使用 plan mode 时，按界面流程批准并退出只读模式后才能写文件。此练习**手动维护三文件，不需要先安装插件**；Pi 的插件路径和 `/plan-execute` 用法见 [Pi 指南](./PI_WORKFLOWS.md#可选planning-with-files-插件)。
+检查返回的 plan 是否满足契约。确认后，让同一 Agent 写入 `task_plan.md`（阶段与待办）、`findings.md`（接口与设计决定）、`progress.md`（执行和测试结果）；这是 [planning-with-files 的三文件模式](https://github.com/OthmanAdi/planning-with-files#the-3-file-pattern)。Claude Code 使用 plan mode 时，按界面流程批准并退出只读模式后才能写文件。此练习**手动维护三文件，不需要先安装插件**；详细工程原则见 [跨工具实践指南](./AGENT_ENGINEERING_GUIDE.md)。
 
 这里为了让两个独立 worktree 读到共同契约，特意把三份初始文件一起提交；planning-with-files 插件的默认做法是把它们作为 gitignored 的工作记忆，本练习的 Git 用法是教学选择，不代表插件默认行为。检查三个文件没有秘密信息后提交基线：
 
