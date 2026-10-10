@@ -32,4 +32,4 @@ pi --no-mcp --no-extensions --tools read,grep,find,ls --print "审查当前变�
 
 只有在手动协调多个 worktree 会话反复消耗时间时，才考虑现成扩展或用 Pi 的扩展机制增加调度能力。Pi 基础版[明确不内置子 Agent](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/README.md)，本机当前也没有安装相关包；不能把“让 Pi 自行创建并协调团队”当作已具备的默认能力。[推荐 Skill 与 Agent 清单的本机核对](./AI_WORKFLOWS.md#skill-与-agent-安装判断)针对 Claude Code 的候选插件，不等同于 Pi 的扩展。
 
-**判断是否提效**：沿用 [实验记录](./EXPERIMENT_LOG.md) 的字段，观察一个 Pi、Pi 加只读审查、多个 Pi 会话三个方案各自的交付总耗时、人工审查与返工、通过验收情况和工具成本。已有外部研究的结果与适用边界见 [通用指南](./AI_WORKFLOWS.md)。
+**判断是否提效**：如果需要比较一个 Pi、Pi 加只读审查、多个 Pi 会话，记录各自的交付总耗时、人工审查与返工、实际验收结果和工具成本；研究结果的适用边界见 [通用指南](./AI_WORKFLOWS.md)。
