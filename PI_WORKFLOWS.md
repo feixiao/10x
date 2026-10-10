@@ -1,5 +1,7 @@
 # Pi 版：用现成能力加速研发
 
+想直接跟着操作，可从 [两个 Agent 并行开发的练习](./STEP_BY_STEP.md) 开始。
+
 核对环境：本机 Pi 1.1.0，`pi list` 显示未安装扩展包。此页是 [通用工具选型与研究证据](./AI_WORKFLOWS.md) 的 Pi 使用版，不涉及开发编排器。具体 CLI 选项以 [Pi 命令行文档](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/cli.md) 和本机 `pi --help` 为准。
 
 ## 先用一个 Pi 完成闭环
@@ -28,8 +30,14 @@ pi --no-mcp --no-extensions --tools read,grep,find,ls --print "审查当前变�
 
 对批量、互不依赖的一次性任务，Pi 还提供 `pi --print` 非交互模式与 `pi --mode json` 事件流，适合由已有 CI 或任务系统调用。依 [Pi CLI 集成说明](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/cli-integration.md)，`--print` 的失败或中止会以非零状态退出；JSON 流里的 Agent 失败不一定令进程退出非零，使用该模式时须检查事件中的结束状态。不要只解析模型最后一句话判断成功。
 
-## 什么时候考虑 Pi 扩展
+## 可选：planning-with-files 插件
 
-只有在手动协调多个 worktree 会话反复消耗时间时，才考虑现成扩展或用 Pi 的扩展机制增加调度能力。Pi 基础版[明确不内置子 Agent](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/README.md)，本机当前也没有安装相关包；不能把“让 Pi 自行创建并协调团队”当作已具备的默认能力。[推荐 Skill 与 Agent 清单的本机核对](./AI_WORKFLOWS.md#skill-与-agent-安装判断)针对 Claude Code 的候选插件，不等同于 Pi 的扩展。
+[项目原文](https://github.com/OthmanAdi/planning-with-files#the-3-file-pattern)使用 `task_plan.md`（阶段）、`findings.md`（发现与决策）、`progress.md`（执行与测试记录）保存长任务状态。它与“先审阅方案”的 plan mode 分属两个阶段：前者维护执行中的状态，后者帮助批准实施方案。Pi 的[专用说明](https://github.com/OthmanAdi/planning-with-files/blob/master/docs/pi-agent.md)提供 `pi install npm:planning-with-files`、`/skill:planning-with-files` 和 `/plan-execute`：审阅三文件后才启用执行阶段的提醒与门槛。
+
+本机目前未安装该第三方包，本项目也未验证它在 Pi 1.1.0 的实际运行效果。长任务经常在会话切换时丢失上下文时可以评估安装；[动手练习](./STEP_BY_STEP.md)默认手动维护相同三文件，使工具可用性不影响练习。插件负责状态连续性，不负责把多个编码会话的改动合并，也不替代目标仓库的单测与 CI。默认文件是 gitignored 的工作记忆；并行 Agent 之间共享契约时，需要明确计划文件如何传递并保证只有一个协调者更新它。
+
+## 什么时候考虑编排扩展
+
+只有在手动协调多个 worktree 会话反复消耗时间时，才考虑现成编排扩展。Pi 基础版[明确不内置子 Agent](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/README.md)，本机当前也没有安装相关包；不能把“让 Pi 自行创建并协调团队”当作已具备的默认能力。[推荐 Skill 与 Agent 清单的本机核对](./AI_WORKFLOWS.md#skill-与-agent-安装判断)针对 Claude Code 的候选插件，不等同于 Pi 的扩展。
 
 **判断是否提效**：如果需要比较一个 Pi、Pi 加只读审查、多个 Pi 会话，记录各自的交付总耗时、人工审查与返工、实际验收结果和工具成本；研究结果的适用边界见 [通用指南](./AI_WORKFLOWS.md)。
