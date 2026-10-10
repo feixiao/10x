@@ -8,6 +8,7 @@
 - [统一规则与跨工具规范](./UNIFIED_AGENT_RULES.md)：Claude Code、omp 与 Pi 的统一规则架构、契约定义与多语言工程约束。
 - [C++、Go、Python 动手实验](./agent-lab/README.md)：本机可构建的三个同规格费用汇总 CLI，用 Agent 完成类别筛选，并运行各语言测试与验收命令。
 - [动手练习](./STEP_BY_STEP.md)：从全新 Go 项目开始，先审阅三文件计划，再由两个 Agent 分工开发、单测、集成与独立验收；该练习不测提效。
+- [1~2 小时重构实战指南 (omp + planning-with-files)](./REFACTORING_WITH_PLANNING_FILES_GUIDE.md)：基于磁盘状态机与退出门禁（Stop Gate）的单会话自主可控重构落地指南。
 
 ## 当前工作假设（待真实任务验证）
 
