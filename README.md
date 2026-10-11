@@ -2,16 +2,23 @@
 
 本项目整理公开研究、工具现有能力和可复用的研发工作方式。目标是缩短**通过验收的交付时间**，同时观察审查、返工、缺陷和工具成本。“10x”是项目名，不是已证明的提效倍数。本仓库是研究文档，不是编码 Agent 或自动化平台。
 
-## 从哪里开始
+## 文档与实践指南（docs/ 目录）
 
-- [跨工具实践指南](./AGENT_ENGINEERING_GUIDE.md)：公开实证与证据边界、交付闭环、并行边界、主流工具对比与效果衡量。
-- [统一规则与跨工具规范](./UNIFIED_AGENT_RULES.md)：Claude Code、omp 与 Pi 的统一规则架构、契约定义与多语言工程约束。
+### 1. 核心理论与工程规范
+- [跨工具实践指南](./docs/AGENT_ENGINEERING_GUIDE.md)：公开实证与证据边界、交付闭环、并行边界、主流工具对比与效果衡量。
+- [统一规则与跨工具规范](./docs/UNIFIED_AGENT_RULES.md)：Claude Code、omp 与 Pi 的统一规则架构、契约定义与多语言工程约束。
+- [无人值守任务规格与验收契约规范 (Task Spec Template)](./docs/TASK_SPEC_TEMPLATE.md)：防范围蔓延、破坏性重构与测试篡改的标准化任务拆解与黄金行为锁模板。
+- [24小时 Agent 产出高效审查与验收 SOP](./docs/AGENT_DIFF_REVIEW_GUIDE.md)：15 分钟内快速定位风险、扫描作弊隐患并安全合并无人值守代码的审查流程。
+
+### 2. 动手实战与演练
 - [C++、Go、Python 动手实验](./agent-lab/README.md)：本机可构建的三个同规格费用汇总 CLI，用 Agent 完成类别筛选，并运行各语言测试与验收命令。
-- [动手练习](./STEP_BY_STEP.md)：从全新 Go 项目开始，先审阅三文件计划，再由两个 Agent 分工开发、单测、集成与独立验收；该练习不测提效。
-- [1~2 小时重构实战指南 (omp + planning-with-files)](./REFACTORING_WITH_PLANNING_FILES_GUIDE.md)：基于磁盘状态机与退出门禁（Stop Gate）的单会话自主可控重构落地指南。
-- [OpenHands 本地部署与使用指南 (配合 LMStudio)](./OPENHANDS_LOCAL_LMSTUDIO_GUIDE.md)：基于 Docker 沙盒环境与本地模型 API 的部署与避坑实践指南。
-- [无人值守任务规格与验收契约规范 (Task Spec Template)](./TASK_SPEC_TEMPLATE.md)：防范围蔓延、破坏性重构与测试篡改的标准化任务拆解与黄金行为锁模板。
-- [24小时 Agent 产出高效审查与验收 SOP](./AGENT_DIFF_REVIEW_GUIDE.md)：15 分钟内快速定位风险、扫描作弊隐患并安全合并无人值守代码的审查流程。
+- [动手练习](./docs/STEP_BY_STEP.md)：从全新 Go 项目开始，先审阅三文件计划，再由两个 Agent 分工开发、单测、集成与独立验收；该练习不测提效。
+- [1~2 小时重构实战指南 (omp + planning-with-files)](./docs/REFACTORING_WITH_PLANNING_FILES_GUIDE.md)：基于磁盘状态机与退出门禁（Stop Gate）的单会话自主可控重构落地指南。
+
+### 3. Agent 环境搭建与互联
+- [OpenHands 本地部署与使用指南 (配合 LMStudio)](./docs/OPENHANDS_LOCAL_LMSTUDIO_GUIDE.md)：基于 Docker 沙盒环境与本地模型 API 的部署与避坑实践指南。
+- **一键部署脚本**: [`deploy_openhands.sh`](./deploy_openhands.sh) — 自动化检测 Docker、初始化 `~/volumes/openhands` 目录、启动 OpenHands 并支持与本地其他 Agent 容器网络互通。
+- **OpenClaw 集成 Skill**: [`openclaw-skills/openhands/SKILL.md`](./openclaw-skills/openhands/SKILL.md) — 供 OpenClaw 调用的现成 Skill，实现通过 REST API 调度 OpenHands 容器执行复杂代码工程任务。
 
 ## 当前工作假设（待真实任务验证）
 
@@ -20,4 +27,4 @@
 3. 大量独立迁移可考虑 Claude Code `/batch`；需要成员沟通的复杂任务可考虑实验性的 Agent Teams；Pi 基础版不内置子 Agent，多会话并行需独立管理和集成。
 4. 并行任务按文件或模块划清归属。各自单测通过后，仍须在**集成版本**运行回归与验收。无法自动判断的协议、并发、媒体与性能结论要有可重复的实测证据。
 
-已有研究既观察到提效，也观察到减速；其任务、人员与工具版本不同，不能直接推算本人的收益。研究数字、来源和限制详见 [跨工具实践指南](./AGENT_ENGINEERING_GUIDE.md)。遇到具体选型争议时，再用少量真实任务记录目标仓库版本、工具与模型、验收结果、准备与等待时间、审查与返工、费用；根据这些数据修订建议。无需先建设新编排器或开展固定周期的实验。
+已有研究既观察到提效，也观察到减速；其任务、人员与工具版本不同，不能直接推算本人的收益。研究数字、来源和限制详见 [跨工具实践指南](./docs/AGENT_ENGINEERING_GUIDE.md)。遇到具体选型争议时，再用少量真实任务记录目标仓库版本、工具与模型、验收结果、准备与等待时间、审查与返工、费用；根据这些数据修订建议。无需先建设新编排器或开展固定周期的实验。
