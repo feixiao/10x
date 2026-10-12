@@ -6,7 +6,7 @@
 
 ## 1. 项目概况与架构说明
 
-`agent-lab` 包含三套独立语言实现（C++17、Go 1.22+、Python 3.10+）的费用汇总 CLI 工具（`expense-report`）。
+`agent-lab` 包含三套独立语言实现（`cpp` 使用 C++14，`starter/cpp` 使用 C++17，另有 Go 1.22+、Python 3.10+）的费用汇总 CLI 工具（`expense-report`）。
 - `starter/{cpp,go,python}`：未实现 `--category` 筛选特性的干净基准代码。
 - `{cpp,go,python}`：已实现完整特性的参考实现。
 - 业务契约：
