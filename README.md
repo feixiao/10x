@@ -19,7 +19,81 @@
 - [OpenHands 本地部署与使用指南 (配合 LMStudio)](./docs/OPENHANDS_LOCAL_LMSTUDIO_GUIDE.md)：基于 Docker 沙盒环境与本地模型 API 的部署与避坑实践指南。
 - **一键部署脚本**: [`deploy_openhands.sh`](./deploy_openhands.sh) — 自动化检测 Docker、初始化 `~/volumes/openhands` 目录、启动 OpenHands 并支持与本地其他 Agent 容器网络互通。
 - **OpenClaw 集成 Skill**: [`openclaw-skills/openhands/SKILL.md`](./openclaw-skills/openhands/SKILL.md) — 供 OpenClaw 调用的现成 Skill，实现通过 REST API 调度 OpenHands 容器执行复杂代码工程任务。
+- **按语言定制的 AI Agent 研发套件 (Modular Agent Harnesses)**: [templates/](./templates/) 及一键安装脚本 [`scripts/install-harness.sh`](./scripts/install-harness.sh) — 按语言彻底解耦（独立 C++、Go、Python 与 Android 模版），零杂质拷贝，开箱即用。
 
+## 开箱即用：按需拷贝对应语言的 Agent 套件
+
+如果你日常需要维护各种**不同技术栈的独立工程**，不需要把所有语言规则混在一起。**你的项目用什么语言，就只拷贝该语言的纯净模版**：
+
+| 你的工程技术栈 | 对应专属模版目录 | 核心针对性规范 |
+| :--- | :--- | :--- |
+| **纯 C++ 项目** | [`templates/cpp/`](./templates/cpp/) | CMake/CTest/ASan、RAII 内存安全、智能指针、ccache 缓存复用 |
+| **纯 Go 项目** | [`templates/go/`](./templates/go/) | `go test -race`、接口解耦与 Fake 注入、Goroutine 泄漏防范 |
+| **纯 Python 项目** | [`templates/python/`](./templates/python/) | `pytest`、`ruff`、`mypy` 静态类型检查、禁止裸 except、pathlib |
+| **纯 Android 项目** | [`templates/android/`](./templates/android/) | Gradle 单元测试、Main 线程禁令、JNI LocalRef 释放与异常屏障 |
+
+---
+
+### 1. 拷贝与接入步骤 (以 C++ 项目为例)
+
+#### 方式 A：直接全量复制对应语言模版 (最纯净推荐)
+```bash
+# 如果你的项目是 C++:
+cp -R templates/cpp/. /path/to/my-cpp-project/
+
+# 如果你的项目是 Go:
+# cp -R templates/go/. /path/to/my-go-project/
+
+# 进入你的工程，一键初始化环境
+cd /path/to/my-cpp-project
+bash scripts/setup-ai-env.sh
+```
+
+#### 方式 B：使用安装脚本自动化部署
+```bash
+# 语法: ./scripts/install-harness.sh <cpp|go|python|android> <目标工程路径>
+./scripts/install-harness.sh cpp /path/to/my-cpp-project
+```
+
+---
+
+### 2. 拷贝进项目后的资产结构 (以纯 C++ 为例，无任何多余语言杂质)
+
+```
+my-cpp-project/
+├── AGENTS.md                   # 纯 C++ 专用主契约与 CMake/CTest 验证命令
+├── CLAUDE.md -> AGENTS.md      # 自动软链接 (Claude Code 免配置识别)
+├── roles/                      # 五大专职 Agent 角色定义 (主控、工兵、盲审官、记账员、支持顾问)
+├── skills/                     # 纯 C++ 技能库
+│   ├── internal-codemap/       # CMake Target 依赖树与 main 入口导航 (无跨语言干扰)
+│   ├── project-develop/        # C++ 专向硬约束 (RAII、裸指针跨线程禁令、ASan 门禁)
+│   ├── project-autopilot/      # 主从隔离自动驾驶 (零代码主控按 Worktree 调度工兵)
+│   ├── internal-audit/         # C++ 专向双阶段盲审防线 (悬垂指针、Double-Free 排查)
+│   └── project-support/        # 只读技术支持技能 (严禁修改代码)
+├── scripts/
+│   ├── setup-ai-env.sh         # 软链接建立与 ccache 缓存自检脚本
+│   └── audit-diffs.sh          # 自动分离 C++ 业务代码与单测代码的物理切分脚本
+└── tasks/
+    ├── tracker.md              # 任务流水线总表
+    └── templates/
+        └── topic-template.md   # C++ 专向任务卡模版 (#101~#10N)
+```
+
+---
+
+### 3. 日常研发使用 SOP（3 步走）
+
+1. **确认/微调入口（仅需 1 分钟）**：
+   - 拷贝完成后，打开 `skills/internal-codemap/references/`，按需记录你项目的核心头文件或 CMake Target。
+2. **立项与自动驾驶推进**：
+   - 复制 `tasks/templates/topic-template.md` 至 `tasks/feat-xxx.md`，在 `tasks/tracker.md` 注册为 `ready`；
+   - 启动主控 Agent（如 Claude Code 或 Cursor），让其读取 `tracker.md` 并调度 Worker Agent 在独立 Git Worktree 中完成代码与单测闭环。
+3. **合并前双阶段盲审**：
+   - 提交人工 Review 前，在目标分支运行：
+     ```bash
+     ./scripts/audit-diffs.sh origin/main...HEAD .audit
+     ```
+   - 启动全新会话的独立审查 Agent，加载 `skills/internal-audit` 技能。第一阶段仅给 `.audit/code.diff` 逆向排查语言级内存漏洞与边界；第二阶段追加 `.audit/tests.diff` 与 `.audit/message.txt` 严核测试篡改作弊。
 ## 当前工作假设（待真实任务验证）
 
 1. 有现成测试、边界清楚的小改：先用一个编码 Agent 完成实现和局部单测，再由项目 CI 和真实行为验收。Pi 或 Claude Code 都可承担。
