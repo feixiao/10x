@@ -1,0 +1,33 @@
+build:
+  maxIssues: 0
+  weights:
+    complexity: 2
+    formatting: 1
+
+complexity:
+  CyclomaticComplexMethod:
+    active: true
+    threshold: 10
+    ignoreSimpleWhenEntries: true
+  LongMethod:
+    active: true
+    threshold: 40
+  LongParameterList:
+    active: true
+    functionThreshold: 6
+    ignoreDefaultParameters: true
+  LargeClass:
+    active: true
+    threshold: 300
+
+naming:
+  FunctionNaming:
+    active: true
+    # 允许小驼峰（纯逻辑函数）以及大驼峰（Jetpack Compose 视图组件函数）
+    functionPattern: '^([a-z][a-zA-Z0-9]*|[A-Z][a-zA-Z0-9]*)$'
+
+style:
+  WildcardImport:
+    active: true
+  MagicNumber:
+    active: false # UI 布局常用 8.dp, 16.dp 等，关闭以防 AI 过度抽取常量导致代码膨胀

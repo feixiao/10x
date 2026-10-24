@@ -24,22 +24,41 @@
 
 ---
 
-## 三、 Android 验证命令速查 (Commands Reference)
+## 三、 Android 验证与质量门禁速查 (Commands Reference)
 ```bash
-# 1. 运行本地单元测试 (无需真机)
+# 1. AI 自动化质量门禁（推荐：编译 + Detekt + Lint + 单测 + Roborazzi截图）
+./scripts/ai-verify.sh
+
+# 2. 手动执行 Gradle 聚合门禁
+./gradlew aiVerify
+
+# 3. 运行本地单元测试 (无需真机)
 ./gradlew testDebugUnitTest
 
-# 2. 静态代码分析
-./gradlew lintDebug
-```
+# 4. 静态代码分析
+./gradlew detekt lintDebug
 
+# 5. 抓取与比对 UI 快照
+./gradlew recordRoborazziDebug
+```
 ---
 
 ## 四、 不可妥协的工程红线 (Hard Invariants)
 
 1. **严禁自动推送远端**：本地可以编译、测试、创建 Commit，但严禁执行 `git push` 或发布 Tag。
 2. **禁止篡改断言作弊**：遇单测失败，必须修复业务代码逻辑，严禁删除断言或放宽判定条件。
-- **主线程零负载**: 严禁在 Main (UI) 线程执行磁盘 I/O、网络请求或超过 5ms 的 Native NDK 计算。
-- **JNI LocalRef 及时释放**: 在密集循环中调用 JNI 创建的局部引用，**必须显式调用 `env->DeleteLocalRef()`**。
-- **JNI 异常屏障**: C++ 代码返回 JVM 前必须捕获所有异常并转为 Java 异常，防止未捕获异常导致 SIGABRT 闪退。
+- **主线程零负载**: 严禁在 Main (UI) 线程执行磁盘 I/O、网络请求或超过 5ms 的计算。
+- **MVI 状态机与 Stateless Compose**:
+  - 页面必须拆分 `UiState` 数据契约与 `UiIntent` 事件契约。
+  - Composable 函数必须为无状态纯组件 `fun XxxContent(state: UiState, onIntent: (UiIntent) -> Unit)`，禁止在 UI 内部直接读写 ViewModel。
+- **4 状态黄金 UI 快照**: 页面级修改必须编写继承自 `BaseScreenshotTest` 的测试，在 `screenshots/` 产出 Default、Loading、Error、DarkMode 四张快照。
+- **门禁通过方可汇报**: 代码修改后必须自主运行 `./scripts/ai-verify.sh` 并确认输出 `✅ [SUCCESS]`，严禁交付未经验证的代码。
 3. **验证命令输出作为完工证据**：代码修改后必须输出真实运行日志证明通过，严禁伪造结果或交付未经验证的代码。
+
+---
+
+## 五、 完工汇报规范 (Definition of Done)
+严禁向人类汇报长篇实现代码，只展示机器门禁证据：
+1. `./scripts/ai-verify.sh` 运行状态与耗时。
+2. 生成的 UI 快照文件路径（`screenshots/*.png`）。
+3. 单元测试覆盖的状态机边界情况。

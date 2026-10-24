@@ -1,0 +1,31 @@
+// 合并到项目根目录 build.gradle.kts
+
+plugins {
+    alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.roborazzi) apply false
+}
+
+// 统一为所有子模块配置 Detekt 静态分析
+subprojects {
+    apply(plugin = "io.gitlab.arturbosch.detekt")
+
+    configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
+        buildUponDefaultConfig = true
+        allRules = false
+        config.setFrom(files("${rootDir}/config/detekt/detekt.yml"))
+        autoCorrect = true // 自动修正空格与格式问题，避免 Agent 陷入无意义排版死循环
+    }
+}
+
+// 统一质量门禁聚合任务：编译 -> Detekt -> Lint -> 单元测试 -> 截图生成
+tasks.register("aiVerify") {
+    group = "verification"
+    description = "AI Agent automated quality gate"
+    dependsOn(
+        ":app:compileDebugKotlin",
+        ":app:detekt",
+        ":app:lintDebug",
+        ":app:testDebugUnitTest",
+        ":app:recordRoborazziDebug"
+    )
+}

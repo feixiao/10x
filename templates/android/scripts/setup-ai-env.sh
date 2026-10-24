@@ -34,6 +34,7 @@ setup_symlink "../skills" ".kiro/skills"
 
 if [[ -f "AGENTS.md" ]]; then
     setup_symlink "AGENTS.md" "CLAUDE.md"
+    setup_symlink "AGENTS.md" ".cursorrules"
 fi
 
 # 2. 赋予脚本可执行权限
