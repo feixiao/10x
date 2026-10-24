@@ -12,13 +12,22 @@ complexity:
   LongMethod:
     active: true
     threshold: 40
+    ignoreAnnotated: ['Composable']
   LongParameterList:
     active: true
     functionThreshold: 6
     ignoreDefaultParameters: true
+    ignoreAnnotated: ['Composable']
+    ignoreAnnotatedParameter: ['Composable']
   LargeClass:
     active: true
     threshold: 300
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: false
+  SwallowedException:
+    active: false
 
 naming:
   FunctionNaming:

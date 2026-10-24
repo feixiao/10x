@@ -31,9 +31,7 @@ abstract class BaseScreenshotTest {
     )
 
     fun captureContent(filename: String, content: @Composable () -> Unit) {
-        composeTestRule.setContent {
-            content()
-        }
+        composeTestRule.setContent(content)
         composeTestRule.onRoot().captureRoboImage("screenshots/$filename.png")
     }
 }
