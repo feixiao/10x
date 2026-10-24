@@ -7,6 +7,7 @@
 ### 1. 核心理论与工程规范
 - [跨工具实践指南](./docs/AGENT_ENGINEERING_GUIDE.md)：公开实证与证据边界、交付闭环、并行边界、主流工具对比与效果衡量。
 - [统一规则与跨工具规范](./docs/UNIFIED_AGENT_RULES.md)：Claude Code、omp 与 Pi 的统一规则架构、契约定义与多语言工程约束。
+- [OMP 与 Claude Code 研发提效、全局配置与量化监控手册](./docs/OMP_CLAUDE_CODE_HANDBOOK.md)：面向 C/C++ 音视频、Go 高并发与多语言整洁架构的双擎分工、避坑全局配置（Hooks/TTSR/DAP/Swarm）及零侵入提效监控方案（配套 [`scripts/ai-metrics.sh`](./scripts/ai-metrics.sh)）。
 - [无人值守任务规格与验收契约规范 (Task Spec Template)](./docs/TASK_SPEC_TEMPLATE.md)：防范围蔓延、破坏性重构与测试篡改的标准化任务拆解与黄金行为锁模板。
 - [24小时 Agent 产出高效审查与验收 SOP](./docs/AGENT_DIFF_REVIEW_GUIDE.md)：15 分钟内快速定位风险、扫描作弊隐患并安全合并无人值守代码的审查流程。
 
