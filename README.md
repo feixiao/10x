@@ -16,6 +16,20 @@
 
 ---
 
+## ⚡ 一键接入到你的其他项目
+
+你可以直接使用本项目提供的一键安装脚本，秒级将方案一（Supervisor + MCP 矩阵）或方案二（Solo Worktree）注入到你的任何工程中：
+
+```bash
+# 全量安装（主控状态机调度器 + 业务与运维 MCP 矩阵 + Solo 工作车间）
+./install.sh /path/to/my-other-project
+
+# 轻量安装（仅安装 Solo 多任务 Worktree 并行调度器）
+./install.sh /path/to/my-other-project --mode=solo
+```
+*脚本会自动复制脚本与配置、配置可执行权限，并在目标项目的 `.gitignore` 中注册安全规则。*
+
+---
 ## 一、方案概要与快速上手
 
 ### 1. 终态目标蓝图与主控实现 (ai_native.md)
@@ -107,15 +121,16 @@ python3 tests/test_ai_native_suite.py
 ```
 .
 ├── README.md                           # 方案矩阵总览与快速导航
+├── install.sh                          # 外部工程一键安装快捷入口 (转发至 scripts/install.sh)
 ├── ai_native.md                        # 方案 1: AI-Native 超级个体全生命周期终态目标蓝图
 ├── docs/
 │   ├── SOLO_EDITION_GUIDE.md           # 方案 2: 个人超级个体落地指南 (Solo Edition)
 │   └── ENTERPRISE_EDITION_GUIDE.md     # 方案 3: 企业级安全合规落地指南 (Enterprise Edition)
 ├── scripts/
+│   ├── install.sh                      # 一键注入与部署脚本
 │   ├── supervisor.py                   # 方案 1: 主控状态机调度器 (四角色流转 + 熔断保护)
 │   ├── solo-worktree.sh                # 方案 2: 个人版多任务 Git Worktree 物理隔离调度器
 │   └── audit-diffs.sh                  # 双阶段防测试篡改差异分离脚本 (Solo & CI 通用)
-├── mcp_servers/
 │   ├── mcp_base.py                     # 轻量标准 MCP (Stdio / JSON-RPC 2.0) 协议基类
 │   ├── biz_inspector.py                # 业务数据只读巡检 MCP (防注入/防堆叠/强制LIMIT)
 │   └── infra_devops.py                 # 基础设施运维 MCP (防命令注入/截断/生产发布令牌)
