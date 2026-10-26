@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# scripts/audit-diffs.sh - C++ 代码与单测物理隔离拆分脚本
-# 用途: 生成双阶段盲审集合 A (code.diff + stat.txt) 与集合 B (tests.diff + message.txt)
+# scripts/audit-diffs.sh - 代码与单测物理隔离双阶段反作弊拆分脚本
+# 用途: 生成双阶段审查集合 A (code.diff + stat.txt) 与集合 B (tests.diff + message.txt)
 # ==============================================================================
 set -euo pipefail
 
@@ -44,7 +44,7 @@ CODE_FILES=()
 # 4. 精确分类测试文件与业务文件
 while IFS= read -r file; do
     [[ -z "$file" ]] && continue
-    if [[ "$file" =~ (test_|_test\.|Test\.(kt|java)$|tests/|test/|androidTest/|testdata/|conftest\.py|gtest) ]]; then
+    if [[ "$file" =~ (test_|_test\.|Test\.(kt|java|ts|js|jsx|tsx)$|\.spec\.(ts|js)$|tests/|test/|androidTest/|testdata/|conftest\.py|gtest) ]]; then
         TEST_FILES+=("$file")
     else
         CODE_FILES+=("$file")
@@ -70,4 +70,4 @@ echo "    - 业务代码文件数: ${#CODE_FILES[@]} (写入 ${OUTPUT_DIR}/code.
 echo "    - 测试代码文件数: ${#TEST_FILES[@]} (写入 ${OUTPUT_DIR}/tests.diff)"
 echo "    - 结构变更统计: (写入 ${OUTPUT_DIR}/stat.txt)"
 echo "    - 提交说明文本: (写入 ${OUTPUT_DIR}/message.txt)"
-echo "==> [audit-diffs] C++ 双阶段盲审物理隔离就绪！"
+echo "==> [audit-diffs] 双阶段反作弊代码与测试物理隔离就绪！"
