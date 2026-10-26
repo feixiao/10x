@@ -11,7 +11,7 @@
 | 方案分类 | 定位与核心价值 | 核心技术栈 / 工具矩阵 | 核心资产与落地文档 |
 | :--- | :--- | :--- | :--- |
 | **1. 终态目标蓝图与实现**<br>*(Blueprint & Engine)* | 1 名人类架构师 + 4 专职 Agent 协同编排 + MCP 矩阵 + 混合算力底座的全生命周期实现 | 主控状态机调度器 + Planner / Coder / QA / DevOps 专职角色 + 熔断保护 + 安全 MCP | 📖 [目标蓝图文档](./ai_native.md)<br>🕹️ 主控调度器 [`scripts/supervisor.py`](./scripts/supervisor.py)<br>🔌 MCP 矩阵 [`mcp_servers/`](./mcp_servers/) |
-| **2. 个人落地指南 (阶段一)**<br>*(Solo Edition)* | 单兵多任务物理隔离并行、TDD 单测自愈闭环、本地模型分流降低算力账单 | **Aider + LiteLLM + 本地 Ollama + Git Worktree** | 📖 [Solo Edition 指南](./docs/SOLO_EDITION_GUIDE.md)<br>🛠️ 调度器 [`scripts/solo-worktree.sh`](./scripts/solo-worktree.sh)<br>⚙️ 配置 [`configs/solo/`](./configs/solo/) |
+| **2. 个人落地指南 (阶段一)**<br>*(Solo Edition)* | 单兵多任务物理隔离并行、TDD 单测自愈闭环、本地模型分流降低算力账单 | **Aider + LiteLLM + 本地 LMStudio + Git Worktree** | 📖 [Solo Edition 指南](./docs/SOLO_EDITION_GUIDE.md)<br>🛠️ 调度器 [`scripts/solo-worktree.sh`](./scripts/solo-worktree.sh)<br>⚙️ 配置 [`configs/solo/`](./configs/solo/) |
 | **3. 企业级安全合规**<br>*(Enterprise Edition)* | 面向产研团队的统一安全审计、容器沙盒权限收敛与 CI 反作弊双阶段质量门禁 | **LiteLLM Proxy (PG 审计) + OpenHands 容器沙盒 + CI 门禁** | 📖 [Enterprise 指南](./docs/ENTERPRISE_EDITION_GUIDE.md)<br>🐳 沙盒部署 [`deploy_openhands.sh`](./deploy_openhands.sh)<br>🛡️ 门禁脚本 [`scripts/audit-diffs.sh`](./scripts/audit-diffs.sh)<br>⚙️ 部署配置 [`configs/enterprise/`](./configs/enterprise/) |
 
 ---
@@ -66,7 +66,7 @@ python3 scripts/supervisor.py status --task-id TASK-101
                                                                              ▼
                                                                LiteLLM 本地网关 (:4000)
                                                                      ├── 架构拆解 (约20%流量): 云端旗舰 (Claude/DeepSeek)
-                                                                     └── 编写实现 (约80%流量): 本地 Ollama (Qwen2.5-Coder)
+                                                                     └── 编写实现 (约80%流量): 本地 LMStudio (Qwen3.8/Gemma4)
   ```
 * **开箱即用**：
   ```bash
@@ -137,7 +137,7 @@ python3 tests/test_ai_native_suite.py
 ├── configs/
 │   ├── mcp.json                        # MCP 客户端挂载配置文件 (Claude / Cursor / OpenCode)
 │   ├── solo/                           # 个人版配套配置
-│   │   ├── litellm.yaml                # 混合路由模型映射表 (本地 Ollama + 云端 API)
+│   │   ├── litellm.yaml                # 混合路由模型映射表 (本地 LMStudio + 云端 API)
 │   │   └── .aider.conf.yml             # Aider 自动化架构师模式与跑测预设
 │   └── enterprise/                     # 企业版配套配置
 │       ├── litellm.yaml                # 审计网关与虚拟 Key 配额定义

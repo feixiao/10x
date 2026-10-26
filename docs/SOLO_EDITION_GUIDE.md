@@ -1,6 +1,6 @@
 # AI-Native 个人超级个体落地方案 (Solo Edition)
 
-> **定位**：面向独立开发者与架构师的“一人研发团队”实战方案。作为终态目标蓝图（[`ai_native.md`](../ai_native.md)）的**第一阶段实操落地**，利用 **Aider + LiteLLM + 本地 Ollama + Git Worktree**，实现多任务物理并行、TDD 单测自愈与本地化算力分流。
+> **定位**：面向独立开发者与架构师的“一人研发团队”实战方案。作为终态目标蓝图（[`ai_native.md`](../ai_native.md)）的**第一阶段实操落地**，利用 **Aider + LiteLLM + 本地 LMStudio + Git Worktree**，实现多任务物理并行、TDD 单测自愈与本地化算力分流。
 
 ---
 
@@ -25,7 +25,7 @@ graph TD
     
     subgraph 混合算力底座 (目标约 8:2 分流)
         LiteLLM -->|架构拆解 / --architect (目标约 20% 流量)| Cloud[云端旗舰: Claude 3.7 / DeepSeek-R1]
-        LiteLLM -->|样板代码 / --editor-model (目标约 80% 流量)| Ollama[本地 Ollama: Qwen2.5-Coder 32B/7B]
+        LiteLLM -->|样板代码 / --editor-model (目标约 80% 流量)| LMStudio[本地 LMStudio: :1234/v1<br/>Qwen3.8 / Gemma4]
     end
 
     GateA & GateB -->|通过单测后合入主干| Audit[audit-diffs.sh 双阶段防作弊审查]
@@ -39,13 +39,11 @@ graph TD
 ### 1. 安装核心工具链
 ```bash
 # 1. 安装核心 Agent 与模型网关
-pip install aider-chat litellm
+uv tool install aider-chat
+uv tool install 'litellm[proxy]'
 
-# 2. 本地推理底座 (Mac / Linux)
-# 从 https://ollama.ai 下载安装后拉取模型:
-ollama pull qwen2.5-coder:32b   # 推荐 32GB+ 统一内存设备
-# 若显存不足，可选用轻量版:
-# ollama pull qwen2.5-coder:7b
+# 2. 本地推理底座 (LMStudio)
+# 启动 LMStudio，加载本地模型 (如 Qwen3.8 / Gemma)，开启本地服务端口 :1234
 ```
 
 ### 2. 启动算力网关 (LiteLLM)
@@ -125,6 +123,6 @@ git merge feat/101-jwt-auth
 
 | 场景 | 常见隐患 | 个人版防护策略 |
 | :--- | :--- | :--- |
-| **显存过载 / OOM** | 同时开多个本地 32B 模型导致系统卡死 | 多个 Worktree 共享同一个 LiteLLM 网关与 Ollama 进程，由 Ollama 内部队列串行调度，避免重复加载权重。 |
+| **显存过载 / 调度排队** | 同时开多个本地大模型推理导致系统卡顿 | 多个 Worktree 共享同一个 LiteLLM 网关与 LMStudio 进程，由后端连接池排队处理。 |
 | **单测假性通过** | Agent 修不好逻辑时反向把测试断言改成恒真 | 严格依赖 `scripts/audit-diffs.sh`。测试用例文件物理切分单独审查，严禁测试代码与业务代码混在一起漏审。 |
 | **Worktree 误删** | 未提交或未合入代码在注销时被删 | `scripts/solo-worktree.sh close` 内置未提交文件扫描与 `branch --merged` 主干合并状态核验防御。 |

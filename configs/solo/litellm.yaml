@@ -1,5 +1,5 @@
 # LiteLLM Proxy - 个人超级个体版 (Solo Edition)
-# 职责：20% 云端重推理 (架构/排查) + 80% 本地算力 (编写代码/单测自愈/文档)
+# 职责：20% 云端重推理 (架构/排查) + 80% 本地算力 (LMStudio 本地大模型编写代码/单测自愈/文档)
 # 启动命令: litellm --config configs/solo/litellm.yaml --port 4000
 
 model_list:
@@ -17,19 +17,22 @@ model_list:
       model: deepseek/deepseek-reasoner
       api_key: os.environ/DEEPSEEK_API_KEY
 
-  # 2. 编码执行模型 (用于 --editor-model 快速落地补丁与测试修复，走本地 Ollama)
+  # 2. 编码执行模型 (用于 --editor-model 快速落地补丁与测试修复，走本地 LMStudio)
   - model_name: coder-model
     litellm_params:
-      model: ollama/qwen2.5-coder:32b
-      api_base: http://localhost:11434
+      model: openai/qwen3.8-27b-splash
+      api_base: http://localhost:1234/v1
+      api_key: dummy
       temperature: 0.1
       max_tokens: 8192
 
-  # 备用轻量编码模型 (当本地 32B 显存不足时切到 7B/14B)
+  # 备用轻量编码模型 (LMStudio 已加载的模型)
   - model_name: coder-model-fast
     litellm_params:
-      model: ollama/qwen2.5-coder:7b
-      api_base: http://localhost:11434
+      model: openai/google/gemma-4-26b-a4b-qat
+      api_base: http://localhost:1234/v1
+      api_key: dummy
+      temperature: 0.1
 
 router_settings:
   routing_strategy: latency-based-routing
