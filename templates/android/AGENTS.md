@@ -24,22 +24,22 @@
 
 ---
 
-## 三、 Android 验证与质量门禁速查 (Commands Reference)
+## 三、 Android 验证与动态质量门禁速查 (Commands Reference)
 ```bash
-# 1. AI 自动化质量门禁（推荐：编译 + Detekt + Lint + 单测 + Roborazzi截图）
+# 1. AI 自动化质量门禁（默认 auto：根据 git diff 智能分流 UI 或 Native 门禁）
 ./scripts/ai-verify.sh
 
-# 2. 手动执行 Gradle 聚合门禁
-./gradlew aiVerify
+# 2. 原生 C++/NDK 专属门禁（跳过 UI 渲染与 Detekt，秒级验证）
+./scripts/ai-verify.sh --focus=native
 
-# 3. 运行本地单元测试 (无需真机)
-./gradlew testDebugUnitTest
+# 3. 业务与 UI 专属门禁（Detekt + Lint + 状态机单测 + Roborazzi 快照）
+./scripts/ai-verify.sh --focus=ui
 
-# 4. 静态代码分析
-./gradlew detekt lintDebug
+# 4. 双层全量门禁（Native 编译测试 + UI 门禁）
+./scripts/ai-verify.sh --focus=dual
 
-# 5. 抓取与比对 UI 快照
-./gradlew recordRoborazziDebug
+# 5. 本地 C++ 独立单测与 ASan 内存检测 (若已构建 host CMake)
+ctest --test-dir build_native --output-on-failure
 ```
 ---
 
@@ -47,18 +47,25 @@
 
 1. **严禁自动推送远端**：本地可以编译、测试、创建 Commit，但严禁执行 `git push` 或发布 Tag。
 2. **禁止篡改断言作弊**：遇单测失败，必须修复业务代码逻辑，严禁删除断言或放宽判定条件。
-- **主线程零负载**: 严禁在 Main (UI) 线程执行磁盘 I/O、网络请求或超过 5ms 的计算。
-- **MVI 状态机与 Stateless Compose**:
-  - 页面必须拆分 `UiState` 数据契约与 `UiIntent` 事件契约。
-  - Composable 函数必须为无状态纯组件 `fun XxxContent(state: UiState, onIntent: (UiIntent) -> Unit)`，禁止在 UI 内部直接读写 ViewModel。
-- **4 状态黄金 UI 快照**: 页面级修改必须编写继承自 `BaseScreenshotTest` 的测试，在 `screenshots/` 产出 Default、Loading、Error、DarkMode 四张快照。
-- **门禁通过方可汇报**: 代码修改后必须自主运行 `./scripts/ai-verify.sh` 并确认输出 `✅ [SUCCESS]`，严禁交付未经验证的代码。
-3. **验证命令输出作为完工证据**：代码修改后必须输出真实运行日志证明通过，严禁伪造结果或交付未经验证的代码。
+3. **UI 与业务层红线**:
+   - **主线程零负载**: 严禁在 Main (UI) 线程执行磁盘 I/O、网络请求或超过 5ms 的计算。
+   - **MVI 状态机与 Stateless Compose**:
+     - 页面必须拆分 `UiState` 数据契约与 `UiIntent` 事件契约。
+     - Composable 函数必须为无状态纯组件 `fun XxxContent(state: UiState, onIntent: (UiIntent) -> Unit)`，禁止在 UI 内部直接读写 ViewModel。
+   - **4 状态黄金 UI 快照**: 页面级修改必须编写继承自 `BaseScreenshotTest` 的测试，在 `screenshots/` 产出 Default、Loading、Error、DarkMode 四张快照。
+4. **C++ / NDK / JNI 原生层红线**:
+   - **RAII 与内存安全**: 堆内存必须由智能指针或 RAII 容器管理；**严禁裸指针（Raw Pointer）跨线程或跨异步事件传递**。
+   - **JNIEnv 线程绑定**: `JNIEnv*` 严禁跨线程缓存或传递，跨线程必须通过 `JavaVM->AttachCurrentThread` 取得并配对 Detach。
+   - **JNI 局部引用释放**: 循环体或频繁调用处必须显式调用 `env->DeleteLocalRef()`，防范 512 局部引用表溢出。
+   - **JNI 异常隔离屏障**: 调用 Java 后必须检查 `env->ExceptionCheck()`；C++ 异常严禁穿越 JNI 泄露至 JVM，必须在 JNI 边界 catch-all 并安全转译。
+5. **门禁通过方可汇报**: 代码修改后必须自主运行 `./scripts/ai-verify.sh`（或指定 `--focus`）并确认输出 `✅ [SUCCESS]`，严禁交付未经验证的代码。
 
 ---
 
 ## 五、 完工汇报规范 (Definition of Done)
 严禁向人类汇报长篇实现代码，只展示机器门禁证据：
-1. `./scripts/ai-verify.sh` 运行状态与耗时。
-2. 生成的 UI 快照文件路径（`screenshots/*.png`）。
-3. 单元测试覆盖的状态机边界情况。
+1. `./scripts/ai-verify.sh` 运行状态、执行模式与耗时。
+2. **按任务关注点提供对应凭证**：
+   - **UI 任务**: 生成的 UI 快照文件路径（`screenshots/*.png`）与状态机覆盖说明。
+   - **Native 任务**: C++ 编译与 CTest/GTest 通过日志，及 ASan 内存零泄漏证据。
+   - **桥接任务**: 同时提供 Native 测试与 UI 截图双重凭据。

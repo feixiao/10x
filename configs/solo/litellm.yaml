@@ -1,0 +1,41 @@
+# LiteLLM Proxy - 个人超级个体版 (Solo Edition)
+# 职责：20% 云端重推理 (架构/排查) + 80% 本地算力 (编写代码/单测自愈/文档)
+# 启动命令: litellm --config configs/solo/litellm.yaml --port 4000
+
+model_list:
+  # 1. 架构师模型 (用于 --architect 思考与拆解，走云端旗舰)
+  - model_name: architect-model
+    litellm_params:
+      model: anthropic/claude-3-7-sonnet-20250219
+      api_key: os.environ/ANTHROPIC_API_KEY
+      temperature: 0.2
+      max_tokens: 4096
+
+  # 备用架构师模型 (云端高性价比高推理模型)
+  - model_name: architect-model-backup
+    litellm_params:
+      model: deepseek/deepseek-reasoner
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+  # 2. 编码执行模型 (用于 --editor-model 快速落地补丁与测试修复，走本地 Ollama)
+  - model_name: coder-model
+    litellm_params:
+      model: ollama/qwen2.5-coder:32b
+      api_base: http://localhost:11434
+      temperature: 0.1
+      max_tokens: 8192
+
+  # 备用轻量编码模型 (当本地 32B 显存不足时切到 7B/14B)
+  - model_name: coder-model-fast
+    litellm_params:
+      model: ollama/qwen2.5-coder:7b
+      api_base: http://localhost:11434
+
+router_settings:
+  routing_strategy: latency-based-routing
+  num_retries: 2
+  timeout: 60
+
+litellm_settings:
+  drop_params: true
+  set_verbose: false

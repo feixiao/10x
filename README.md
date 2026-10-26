@@ -4,6 +4,11 @@
 
 ## 文档与实践指南（docs/ 目录）
 
+### 0. 目标蓝图与双版本实操方案
+- [AI-Native 超级个体全生命周期研发落地方案 (终态目标蓝图)](./ai_native.md)：1 名人类架构师 + 4 专职 Agent + MCP 矩阵 + 混合算力底座。
+- [个人超级个体落地指南 (Solo Edition)](./docs/SOLO_EDITION_GUIDE.md)：基于 **Aider + LiteLLM + Ollama + Git Worktree** 的单兵多任务物理并行、TDD 单测自愈与 80% 算力成本节约实战（配套调度器 [`scripts/solo-worktree.sh`](./scripts/solo-worktree.sh) 与配置模版 [`configs/solo/`](./configs/solo/)）。
+- [企业级安全合规落地指南 (Enterprise Edition)](./docs/ENTERPRISE_EDITION_GUIDE.md)：面向产研团队的统一 LiteLLM Proxy 审计、OpenHands 沙盒容器隔离与 CI 反作弊双阶段门禁规范（配套部署配置 [`configs/enterprise/`](./configs/enterprise/)）。
+
 ### 1. 核心理论与工程规范
 - [跨工具实践指南](./docs/AGENT_ENGINEERING_GUIDE.md)：公开实证与证据边界、交付闭环、并行边界、主流工具对比与效果衡量。
 - [统一规则与跨工具规范](./docs/UNIFIED_AGENT_RULES.md)：Claude Code、omp 与 Pi 的统一规则架构、契约定义与多语言工程约束。
@@ -31,8 +36,7 @@
 | **纯 C++ 项目** | [`templates/cpp/`](./templates/cpp/) | CMake/CTest/ASan、RAII 内存安全、智能指针、ccache 缓存复用 |
 | **纯 Go 项目** | [`templates/go/`](./templates/go/) | `go test -race`、接口解耦与 Fake 注入、Goroutine 泄漏防范 |
 | **纯 Python 项目** | [`templates/python/`](./templates/python/) | `pytest`、`ruff`、`mypy` 静态类型检查、禁止裸 except、pathlib |
-| **纯 Android 项目** | [`templates/android/`](./templates/android/) | Gradle 单元测试、Main 线程禁令、JNI LocalRef 释放与异常屏障 |
-
+| **Android 项目 (含 UI 与 NDK/C++)** | [`templates/android/`](./templates/android/) | Gradle 单测、Compose 快照、JNI 异常与引用屏障、动态门禁分流 (auto/native/ui/dual) |
 ---
 
 ### 1. 拷贝与接入步骤 (以 C++ 项目为例)
@@ -95,8 +99,58 @@ my-cpp-project/
      ./scripts/audit-diffs.sh origin/main...HEAD .audit
      ```
    - 启动全新会话的独立审查 Agent，加载 `skills/internal-audit` 技能。第一阶段仅给 `.audit/code.diff` 逆向排查语言级内存漏洞与边界；第二阶段追加 `.audit/tests.diff` 与 `.audit/message.txt` 严核测试篡改作弊。
-## 当前工作假设（待真实任务验证）
 
+---
+
+### 4. 应用到 Android 项目（纯 UI 与 NDK/C++ 混合工程全支持）
+
+Android 实际工程往往兼具 **Kotlin/Compose 业务界面** 与 **C++/NDK 原生引擎**（音视频、图形渲染、通信协议、加密算法等）。套件内置了**动态关注点门禁机制**，支持一键接入与灵活配置：
+
+#### 步骤 1：一键安装到你的 Android 工程
+```bash
+# 语法: ./scripts/install-harness.sh android <你的 Android 项目路径> [默认关注模式: auto|native|ui|dual]
+
+# 示例 A：接入纯 Android 业务工程（默认关注 UI 与业务状态机）
+./scripts/install-harness.sh android /path/to/my-android-app ui
+
+# 示例 B：接入 NDK/C++ 密集型底层工程（默认关注 C++ 编译、内存安全与单测）
+./scripts/install-harness.sh android /path/to/my-ndk-project native
+
+# 示例 C：接入混合工程（默认启用 auto 智能感知，根据 git diff 自动分流）
+./scripts/install-harness.sh android /path/to/my-polyglot-project auto
+```
+*注：若未指定模式，脚本会自动探测工程特征（检测到 `CMakeLists.txt` 或 `cpp/` 目录时自动建议 `auto`，纯 Java/Kotlin 项目建议 `ui`）。*
+
+#### 步骤 2：合并质量门禁 Gradle 配置 (仅需 2 分钟)
+进入安装后的 Android 工程，将 `quality-gate/` 目录下的片段合并到对应文件：
+1. **`quality-gate/libs.versions.toml.snippet`** ➜ 追加至 `gradle/libs.versions.toml`（引入 Detekt、Roborazzi、Turbine）；
+2. **`quality-gate/build.gradle.kts.root.snippet`** ➜ 追加至项目根目录 `build.gradle.kts`（注册统一门禁任务 `aiVerify` 与 Detekt）；
+3. **`quality-gate/build.gradle.kts.module.snippet`** ➜ 追加至对应 App/Feature 模块的 `build.gradle.kts`。
+
+#### 步骤 3：动态关注点模式切换与日常研发
+你可以根据开发场景随时切换验证门禁，避免底层开发被迫跑耗时的 UI 截图，也防范页面变动漏测 Native 构建：
+
+```bash
+# 1. 自动嗅探（推荐：根据当前改动自动选择 UI / Native / Dual 门禁）
+./scripts/ai-verify.sh
+
+# 2. 原生 C++/NDK 专属门禁（执行 C++ 构建、ASan 内存检测、CTest/GTest，秒级响应）
+./scripts/ai-verify.sh --focus=native
+
+# 3. 业务与 UI 专属门禁（Detekt 静态分析 + Slack Lint + 状态机单测 + 4 状态 Roborazzi 快照）
+./scripts/ai-verify.sh --focus=ui
+
+# 4. 双层全量门禁（串行执行 Native 原生校验与 Android UI 门禁）
+./scripts/ai-verify.sh --focus=dual
+```
+
+**持久化配置**：
+- 随时修改工程根目录下的 `.ai-focus` 文件（内容写入 `auto`、`native`、`ui` 或 `dual`）；
+- 或在任务卡（`tasks/<topic-name>.md`）中为单个子任务标记 `Focus` 属性，调度工兵 Agent 针对性闭环。
+
+---
+
+## 当前工作假设（待真实任务验证）
 1. 有现成测试、边界清楚的小改：先用一个编码 Agent 完成实现和局部单测，再由项目 CI 和真实行为验收。Pi 或 Claude Code 都可承担。
 2. 搜索、日志调查或独立审查占用大量上下文：用只读子 Agent 或独立会话返回证据；让主会话集成决策。
 3. 大量独立迁移可考虑 Claude Code `/batch`；需要成员沟通的复杂任务可考虑实验性的 Agent Teams；Pi 基础版不内置子 Agent，多会话并行需独立管理和集成。

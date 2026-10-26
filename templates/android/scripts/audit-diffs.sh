@@ -44,7 +44,7 @@ CODE_FILES=()
 # 4. 精确分类测试文件与业务文件
 while IFS= read -r file; do
     [[ -z "$file" ]] && continue
-    if [[ "$file" =~ (test_|_test\.|Test\.(kt|java)$|tests/|test/|androidTest/|testdata/|conftest\.py|gtest) ]]; then
+    if [[ "$file" =~ (test_|_test\.|Test\.(kt|java|cpp|cc|cxx)$|_test\.(cpp|cc|cxx|c)$|tests/|test/|androidTest/|testdata/|conftest\.py|gtest) ]]; then
         TEST_FILES+=("$file")
     else
         CODE_FILES+=("$file")

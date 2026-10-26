@@ -41,19 +41,46 @@ fi
 echo "--> 2. 配置 scripts 权限..."
 chmod +x scripts/*.sh 2>/dev/null || true
 
-# 3. 检查编译与测试环境
-echo "--> 3. 检查 Android 构建与单测环境..."
+# 3. 检查编译与测试环境 (Kotlin + C++/NDK)
+echo "--> 3. 检查 Android 与 Native 构建环境..."
+HAS_NATIVE=0
+if [[ -f "CMakeLists.txt" || -f "app/src/main/cpp/CMakeLists.txt" || -d "app/src/main/cpp" || -d "cpp" || -d "jni" ]]; then
+    HAS_NATIVE=1
+    echo "  [Native] 检测到 C++/NDK 源码与构建配置，激活原生门禁能力"
+    if command -v cmake >/dev/null 2>&1; then
+        echo "  [CMake] $(cmake --version | head -n 1)"
+    else
+        echo "  [WARN] 本地未找到 cmake 命令，如需本地 host 测试建议安装 cmake"
+    fi
+    if command -v clang-format >/dev/null 2>&1; then
+        echo "  [Clang-Format] $(clang-format --version 2>/dev/null | head -n 1 || echo '已安装')"
+    fi
+fi
+
 if [[ -f "./gradlew" ]]; then
     echo "  [Android] 检测到 gradlew，默认复用 ~/.gradle 共享缓存"
+fi
+
+# 初始化 .ai-focus 默认配置 (若不存在)
+if [[ ! -f ".ai-focus" ]]; then
+    if [[ $HAS_NATIVE -eq 1 ]]; then
+        echo "auto" > .ai-focus
+        echo "  [Focus] 自动生成 .ai-focus (默认: auto，支持自动感知 C++ 与 UI 变更)"
+    else
+        echo "ui" > .ai-focus
+        echo "  [Focus] 自动生成 .ai-focus (默认: ui，纯 Android 页面与状态机门禁)"
+    fi
 fi
 
 # 4. 检查 .gitignore
 echo "--> 4. 检查 .gitignore 临时工件屏蔽..."
 if [[ -f ".gitignore" ]]; then
-    if ! grep -q "^\.audit/" .gitignore; then
-        echo ".audit/" >> .gitignore
-        echo "  [UPDATED] .gitignore 自动追加: .audit/"
-    fi
+    for entry in ".audit/" "build_native/" ".ai-focus"; do
+        if ! grep -q "^${entry}" .gitignore; then
+            echo "$entry" >> .gitignore
+            echo "  [UPDATED] .gitignore 自动追加: $entry"
+        fi
+    done
 fi
 
 echo "==> [setup-ai-env] Android 工程初始化完成！所有 Agent 工具已对齐 skills/ 资产。"
