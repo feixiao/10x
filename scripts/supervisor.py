@@ -18,6 +18,7 @@ import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import time
@@ -257,7 +258,25 @@ class Supervisor:
         else:
             print(f"    - Worktree 隔离目录创建成功: {target}")
 
-    # --------------------------------------------------------------------------
+        # 跨工作区自动同步任务契约至 worktree
+        worktree_task_dir = target / "tasks" / ctx.task_id
+        source_task_dir = self._task_dir(ctx.task_id)
+        if source_task_dir.exists() and not worktree_task_dir.exists():
+            try:
+                shutil.copytree(source_task_dir, worktree_task_dir)
+            except Exception:
+                pass
+
+        # 跨工作区自动链接核心依赖环境 (node_modules, .venv, venv)
+        for dep_dir in ["node_modules", ".venv", "venv"]:
+            src_dep = self.repo_root / dep_dir
+            dst_dep = target / dep_dir
+            if src_dep.is_dir() and not dst_dep.exists():
+                try:
+                    os.symlink(src_dep, dst_dep, target_is_directory=True)
+                    print(f"    - 已建立依赖环境软链接: {dep_dir}")
+                except Exception:
+                    pass
     # 阶段 3: Coder Agent (全栈研发与代码实现)
     # --------------------------------------------------------------------------
     def _step_coding(self, ctx: TaskContext, simulated: bool = False) -> TaskContext:
@@ -350,7 +369,7 @@ class Supervisor:
         if self.audit_script.exists():
             subprocess.run(
                 ["bash", str(self.audit_script), "HEAD~1..HEAD", str(audit_dir)],
-                cwd=self.repo_root,
+                cwd=Path(ctx.worktree_path) if Path(ctx.worktree_path).exists() else self.repo_root,
                 capture_output=True,
                 text=True
             )

@@ -77,6 +77,14 @@ cmd_start() {
             log_info "已同步任务目录: tasks/${task_id}/"
         fi
 
+        # 3. 自动建立核心依赖目录软链接 (node_modules, .venv, venv)
+        for dep in node_modules .venv venv; do
+            if [ -d "${REPO_ROOT}/${dep}" ] && [ ! -e "${target_dir}/${dep}" ]; then
+                ln -s "${REPO_ROOT}/${dep}" "${target_dir}/${dep}" 2>/dev/null || true
+                log_info "已建立依赖软链接: ${dep}"
+            fi
+        done
+
         log_success "独立工作车间创建成功！物理隔离路径: ${target_dir}"
     fi
 

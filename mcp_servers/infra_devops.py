@@ -109,28 +109,28 @@ class InfraDevOpsService:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def trigger_deploy(self, environment: str, confirmation_token: str) -> Dict[str, Any]:
+    def trigger_deploy(self, environment: str, auth_token: str = "", human_token: str = "") -> Dict[str, Any]:
         """
         触发服务发布更新。必须具备人类架构师明确生成的确认令牌。
         """
+        token = auth_token or human_token
         env_clean = environment.strip().lower()
         if env_clean not in ("staging", "production", "prod"):
             return {"success": False, "error": f"不支持的目标发布环境: '{environment}' (仅支持 staging / production)"}
 
         # 生产环境强制必须输入合法令牌
         if env_clean in ("production", "prod"):
-            if not confirmation_token or not confirmation_token.startswith("CONFIRM-PROD-"):
+            if not token or not token.startswith("CONFIRM-PROD-"):
                 return {
                     "success": False,
                     "error": "安全门禁拦截：生产环境发布属于高危动作，必须提供人类架构师批准的一次性令牌 (以 'CONFIRM-PROD-' 开头)！"
                 }
-
         return {
             "success": True,
             "environment": env_clean,
             "status": "triggered",
             "message": f"发布动作已成功触发至 [{env_clean}] 环境！正在排队拉取镜像与健康轮转...",
-            "confirmation_token_used": confirmation_token
+            "token_used": token
         }
 
 
