@@ -24,7 +24,7 @@ graph TD
     SessionA & SessionB -->|OpenAI 协议统一访问| LiteLLM[LiteLLM Proxy 本地网关 :4000]
     
     subgraph 混合算力底座 (目标约 8:2 分流)
-        LiteLLM -->|架构拆解 / --architect (目标约 20% 流量)| Cloud[云端旗舰: Claude 3.7 / DeepSeek-R1]
+        LiteLLM -->|架构拆解 / --architect (目标约 20% 流量)| Magpie[本地 Magpie 网关 :3425/v1<br/>Claude Sonnet 5.5 / GPT-6 Luna / Gemini 3.8]
         LiteLLM -->|样板代码 / --editor-model (目标约 80% 流量)| LMStudio[本地 LMStudio: :1234/v1<br/>Qwen3.8 / Gemma4]
     end
 
@@ -47,16 +47,15 @@ uv tool install 'litellm[proxy]'
 ```
 
 ### 2. 启动算力网关 (LiteLLM)
-使用仓库中预配置的 [`configs/solo/litellm.yaml`](../configs/solo/litellm.yaml)：
-```bash
-# 配置你的云端重推理 API Key
-export ANTHROPIC_API_KEY="sk-ant-..."
-export DEEPSEEK_API_KEY="sk-..."
+使用仓库中预配置的 [`configs/solo/litellm.yaml`](../configs/solo/litellm.yaml)。
 
-# 启动本地模型代理网关
+> 💡 **免 Key 认证说明**：云端重推理模型通过本地 **Magpie 网关**（`:3425/v1`）统一代理与会话保持，**无需在环境变量中配置任何云端 API Key**；日常代码改写由 **LMStudio**（`:1234/v1`）提供 0 边际成本算力。
+
+```bash
+# 一键启动本地多模型代理网关
 litellm --config configs/solo/litellm.yaml --port 4000
 ```
-*提示：网关启动后，所有请求均通过 `http://localhost:4000/v1` 路由，自动实现云端重推理与本地低边际成本模型分流。*
+*提示：网关启动后，所有请求均通过 `http://localhost:4000/v1` 统一路由，自动完成云端重推理与本地低边际成本模型分流。*
 
 ---
 

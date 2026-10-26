@@ -3,21 +3,32 @@
 # 启动命令: litellm --config configs/solo/litellm.yaml --port 4000
 
 model_list:
-  # 1. 架构师模型 (用于 --architect 思考与拆解，走云端旗舰)
+  # 1. 架构师模型 (用于 --architect 顶层思考与拆解，走本地 Magpie 网关旗舰云端模型)
   - model_name: architect-model
     litellm_params:
-      model: anthropic/claude-3-7-sonnet-20250219
-      api_key: os.environ/ANTHROPIC_API_KEY
+      model: openai/antigravity/claude-sonnet-5-5
+      api_base: http://127.0.0.1:3425/v1
+      api_key: dummy
       temperature: 0.2
-      max_tokens: 4096
+      max_tokens: 8192
 
-  # 备用架构师模型 (云端高性价比高推理模型)
+  # 备用架构师模型 (Magpie 深度推理 / 复杂重构模型: GPT-6 Luna)
   - model_name: architect-model-backup
     litellm_params:
-      model: deepseek/deepseek-reasoner
-      api_key: os.environ/DEEPSEEK_API_KEY
+      model: openai/codex/gpt-6-luna
+      api_base: http://127.0.0.1:3425/v1
+      api_key: dummy
+      temperature: 0.2
+      max_tokens: 8192
 
-  # 2. 编码执行模型 (用于 --editor-model 快速落地补丁与测试修复，走本地 LMStudio)
+  # 快速推理架构师模型 (Magpie 高效轻量重推理模型: Gemini 3.8 Flash)
+  - model_name: architect-model-fast
+    litellm_params:
+      model: openai/antigravity/gemini-3.8-flash
+      api_base: http://127.0.0.1:3425/v1
+      api_key: dummy
+      temperature: 0.2
+      max_tokens: 8192
   - model_name: coder-model
     litellm_params:
       model: openai/qwen3.8-27b-splash
