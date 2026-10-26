@@ -1,6 +1,6 @@
 # AI-Native 个人超级个体落地方案 (Solo Edition)
 
-> **定位**：面向独立开发者与架构师的“一人研发团队”实战方案。利用 **Aider + LiteLLM + 本地 Ollama + Git Worktree**，实现多任务物理并行、TDD 单测自愈与 80% 算力成本节约。
+> **定位**：面向独立开发者与架构师的“一人研发团队”实战方案。作为终态目标蓝图（[`ai_native.md`](../ai_native.md)）的**第一阶段实操落地**，利用 **Aider + LiteLLM + 本地 Ollama + Git Worktree**，实现多任务物理并行、TDD 单测自愈与本地化算力分流。
 
 ---
 
@@ -8,11 +8,11 @@
 
 ```mermaid
 graph TD
-    User[你: 人类架构师] -->|1. 任务契约 tasks/xxx.md| Dispatcher[solo-worktree.sh 调度器]
+    User[你: 人类架构师] -->|1. 任务契约 tasks/template.md| Dispatcher[scripts/solo-worktree.sh 调度器]
     
     subgraph 本地并发工作车间
-        Dispatcher -->|拉起独立分支与目录| WT1[Worktree A: feat/auth]
-        Dispatcher -->|拉起独立分支与目录| WT2[Worktree B: fix/cache]
+        Dispatcher -->|创建独立分支与物理目录| WT1[Worktree A: feat/101-auth]
+        Dispatcher -->|创建独立分支与物理目录| WT2[Worktree B: fix/102-cache]
         
         WT1 -->|Aider 实例 A| SessionA[Aider --architect]
         WT2 -->|Aider 实例 B| SessionB[Aider --architect]
@@ -23,28 +23,28 @@ graph TD
 
     SessionA & SessionB -->|OpenAI 协议统一访问| LiteLLM[LiteLLM Proxy 本地网关 :4000]
     
-    subgraph 混合算力底座
-        LiteLLM -->|20% 架构拆解 / --architect| Cloud[云端旗舰: Claude 3.7 / DeepSeek-R1]
-        LiteLLM -->|80% 代码编写 / --editor-model| Ollama[本地 Ollama: Qwen2.5-Coder 32B/7B]
+    subgraph 混合算力底座 (目标约 8:2 分流)
+        LiteLLM -->|架构拆解 / --architect (目标约 20% 流量)| Cloud[云端旗舰: Claude 3.7 / DeepSeek-R1]
+        LiteLLM -->|样板代码 / --editor-model (目标约 80% 流量)| Ollama[本地 Ollama: Qwen2.5-Coder 32B/7B]
     end
 
-    GateA & GateB -->|通过单测后合入主干| Audit[audit-diffs.sh 双阶段防作弊盲审]
+    GateA & GateB -->|通过单测后合入主干| Audit[audit-diffs.sh 双阶段防作弊审查]
     Audit -->|人类 5 分钟复核放行| Main[Main 主干代码]
 ```
 
 ---
 
-## 二、 5 分钟环境初始化（开箱即用）
+## 二、 环境准备
 
 ### 1. 安装核心工具链
 ```bash
-# 1. 核心 Agent 与模型代理
+# 1. 安装核心 Agent 与模型网关
 pip install aider-chat litellm
 
 # 2. 本地推理底座 (Mac / Linux)
-# https://ollama.ai 下载安装
+# 从 https://ollama.ai 下载安装后拉取模型:
 ollama pull qwen2.5-coder:32b   # 推荐 32GB+ 统一内存设备
-# 若显存/内存不足，可选用轻量版:
+# 若显存不足，可选用轻量版:
 # ollama pull qwen2.5-coder:7b
 ```
 
@@ -58,19 +58,19 @@ export DEEPSEEK_API_KEY="sk-..."
 # 启动本地模型代理网关
 litellm --config configs/solo/litellm.yaml --port 4000
 ```
-*提示：网关启动后，所有请求均通过 `http://localhost:4000/v1` 路由，自动实现云端与本地分流。*
+*提示：网关启动后，所有请求均通过 `http://localhost:4000/v1` 路由，自动实现云端重推理与本地低边际成本模型分流。*
 
 ---
 
 ## 三、 日常研发标准作业程序 (SOP)
 
 ### 步骤 1：立项与定义任务契约（人类出题）
-不要直接口头和 AI 聊天。先在主分支定义一份不可篡改的契约卡，例如 `tasks/101-jwt-auth.md`：
+不要直接口头和 AI 聊天。先复制 `tasks/template.md` 并在主分支定义不可篡改的契约卡，例如 `tasks/101-jwt-auth.md`：
 ```markdown
 # 任务目标: 实现基于 RS256 的 JWT 鉴权中间件
-- 接口必须通过 tests/test_auth.py 验证；
-- 严禁修改已有的用户模型数据表结构；
-- 任何 Token 失效场景必须返回统一的 401 JSON 错误体。
+- 验收命令: pytest tests/test_auth.py -v
+- 负向边界: 严禁修改已有的用户模型数据表结构
+- 错误规范: 任何 Token 失效场景必须返回统一的 401 JSON 错误体
 ```
 
 ### 步骤 2：一键拉起独立并行车间
@@ -79,46 +79,52 @@ litellm --config configs/solo/litellm.yaml --port 4000
 # 语法: ./scripts/solo-worktree.sh start <任务ID> [单测命令]
 ./scripts/solo-worktree.sh start 101-jwt-auth "pytest tests/test_auth.py -v"
 ```
-**脚本执行动作**：
-1. 自动在 `../worktrees/101-jwt-auth` 创建物理隔离目录；
-2. 自动拉出 `feat/101-jwt-auth` 分支；
-3. 自动读取 `configs/solo/.aider.conf.yml`，接入 LiteLLM 开启**双模型架构师模式**；
-4. 绑定单测命令，激活**失败自愈循环**。
+**加固机制**：
+1. 自动在 `../worktrees/101-jwt-auth` 创建物理隔离目录与 `feat/101-jwt-auth` 分支；
+2. **自动跨目录同步任务卡**：自动拷贝主分支刚创建的 `tasks/101-jwt-auth.md`，杜绝未提交文件在 Worktree 中找不到的问题；
+3. 自动挂载 `configs/solo/.aider.conf.yml` 启用双模型架构师模式；
+4. 绑定单测命令，激活 Aider 失败自动修复机制。
 
-### 步骤 3：Aider 自动化编码与自愈（Agent 落地）
+### 步骤 3：Aider 自动化编码与单测自愈
 在拉起的 Aider 会话中输入：
 ```text
 /add tasks/101-jwt-auth.md
 请严格根据上述契约实现 JWT 中间件，并补齐单测直至全绿。
 ```
-* **Architect (Claude 3.7 / R1)** 会先给出架构设计和伪代码方案，等待你确认；
-* 确认后 **Editor (本地 Qwen2.5-Coder)** 落地真实代码，随后自动触发 `pytest`；
-* 若单测报错，Aider 会**自动捕捉 Traceback 并尝试重新微调修复**，直至全部通过并自动生成语义化 Git Commit。
+* **Architect (Claude 3.7 / R1)**：给出架构设计和伪代码方案，等待人类确认；
+* **Editor (本地 Qwen2.5-Coder)**：落地代码并自动运行 `pytest`；若单测报错，自动抓取 Traceback 尝试微调自愈，直至全绿。
 
-### 步骤 4：合并前双阶段盲审（防篡改门禁）
-当 Worktree 里的代码测试通过后，切回主分支或在该分支运行本项目提供的双阶段审查脚本：
+### 步骤 4：审查与状态面板
+开发过程中或完成后，随时查看全局车间状态：
 ```bash
-./scripts/audit-diffs.sh main...HEAD .audit
+# 查看所有并发车间、分支与修改状态
+./scripts/solo-worktree.sh status
+
+# 执行双阶段反作弊代码审查
+./scripts/solo-worktree.sh audit 101-jwt-auth
 ```
-* **阶段一 (代码审查)**：检查 `.audit/code.diff`，审查业务逻辑、异常处理与边界。
-* **阶段二 (反作弊核对)**：检查 `.audit/tests.diff`，**确保 Agent 没有把测试断言改宽松或直接删掉失败测试**。
+* **阶段一 (代码审查)**：检查 `.audit/code.diff`，审查业务逻辑、异常处理与边界；
+* **阶段二 (反作弊核对)**：检查 `.audit/tests.diff`，重点排查 Agent 是否有放宽断言、删除既有测试的作弊行为。
 
-### 步骤 5：安全合入与清理
+### 步骤 5：安全合入与注销清理
 ```bash
-# 合入主干
+# 1. 切回主干并合入代码
 git checkout main
 git merge feat/101-jwt-auth
 
-# 清理已完成的 Worktree 目录
+# 2. 安全清理已完成的 Worktree
 ./scripts/solo-worktree.sh close 101-jwt-auth
 ```
+**注销安全防御**：
+* 脚本会自动检查车间是否存在**未提交修改（含未跟踪文件）**；
+* 脚本会自动校验分支是否已**真正合并入主干**，若未合并会强制弹出黄色警告并展示未合并提交，防止误删工作成果。
 
 ---
 
-## 四、 个人版核心收益与避坑守则
+## 四、 个人版常见隐患与防护守则
 
 | 场景 | 常见隐患 | 个人版防护策略 |
 | :--- | :--- | :--- |
-| **显存过载 / OOM** | 同时开多个本地 32B 模型导致系统卡死 | 多个 Worktree 共享同一个 LiteLLM 网关与 Ollama 进程，由 Ollama 内部调度队列排队，避免重复加载权重。 |
-| **单测假性通过** | Agent 连续 2 次修不好逻辑，反向把 `assert status == 200` 改成 `assert True` | 严格依赖 `scripts/audit-diffs.sh`。测试用例文件单独审查，严禁测试代码与业务代码混查。 |
-| **磁盘空间暴涨** | 每个 Worktree 都有一份庞大的构建产物（如 `node_modules`、C++ `build/`） | C++ 使用 `ccache` 全局缓存；Node 使用 `pnpm` 硬链接全局 store；Python 统一使用 `uv` 共享缓存。 |
+| **显存过载 / OOM** | 同时开多个本地 32B 模型导致系统卡死 | 多个 Worktree 共享同一个 LiteLLM 网关与 Ollama 进程，由 Ollama 内部队列串行调度，避免重复加载权重。 |
+| **单测假性通过** | Agent 修不好逻辑时反向把测试断言改成恒真 | 严格依赖 `scripts/audit-diffs.sh`。测试用例文件物理切分单独审查，严禁测试代码与业务代码混在一起漏审。 |
+| **Worktree 误删** | 未提交或未合入代码在注销时被删 | `scripts/solo-worktree.sh close` 内置未提交文件扫描与 `branch --merged` 主干合并状态核验防御。 |

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# solo-worktree.sh: 个人超级个体多 Agent 并行物理隔离车间调度脚本
+# solo-worktree.sh: 个人超级个体多 Agent 并行物理隔离车间调度脚本 (加固增强版)
 # 用法:
 #   ./scripts/solo-worktree.sh start <task-id> [test-command]   # 创建并在独立目录拉起 Aider
-#   ./scripts/solo-worktree.sh list                            # 查看当前所有活跃的工作车间
+#   ./scripts/solo-worktree.sh status                          # 查看当前所有活跃车间与状态
+#   ./scripts/solo-worktree.sh audit <task-id>                 # 执行双阶段反作弊差异隔离检查
 #   ./scripts/solo-worktree.sh close <task-id>                 # 任务完成合入后安全清理 Worktree
 # ==============================================================================
 
@@ -18,6 +19,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
 NC='\033[0m'
 
 log_info() { echo -e "${BLUE}[solo-worktree]${NC} $1"; }
@@ -31,12 +33,14 @@ usage() {
 
 使用命令:
   $0 start <task-id> [test-command]   拉起新的工作车间并启动 Aider
-  $0 list                            列出当前所有并发车间
-  $0 close <task-id>                 安全清理已完成的任务车间
+  $0 status                          查看当前所有并发车间、分支与修改状态
+  $0 audit <task-id>                 对指定任务车间执行双阶段防作弊审查
+  $0 close <task-id>                 安全清理已完成的任务车间 (含未合入防御)
 
 示例:
   $0 start 101-user-jwt "pytest tests/"
-  $0 start 102-cache-redis "go test ./..."
+  $0 status
+  $0 audit 101-user-jwt
   $0 close 101-user-jwt
 EOF
     exit 1
@@ -55,24 +59,30 @@ cmd_start() {
         log_info "正在创建独立 Worktree: ${target_dir} (分支: ${branch_name})..."
         mkdir -p "${WORKTREES_BASE}"
         
-        # 检查分支是否已存在
-        if git rev-parse --verify "${branch_name}" >/dev/null 2>&1; then
-            git worktree add "${target_dir}" "${branch_name}"
+        # 1. 检查分支是否已存在并安全创建 worktree
+        if git -C "${REPO_ROOT}" rev-parse --verify "${branch_name}" >/dev/null 2>&1; then
+            git -C "${REPO_ROOT}" worktree add "${target_dir}" "${branch_name}"
         else
-            git worktree add -b "${branch_name}" "${target_dir}" HEAD
+            git -C "${REPO_ROOT}" worktree add -b "${branch_name}" "${target_dir}" HEAD
         fi
         
-        # 拷贝/软链接必要的工程规范
-        if [ -f "${REPO_ROOT}/tasks/tracker.md" ] && [ -d "${target_dir}/tasks" ]; then
-            cp "${REPO_ROOT}/tasks/tracker.md" "${target_dir}/tasks/tracker.md" 2>/dev/null || true
+        # 2. 跨工作区自动同步未提交或新创建的任务契约 (防止 /add tasks/ 找不到文件)
+        mkdir -p "${target_dir}/tasks"
+        if [ -f "${REPO_ROOT}/tasks/${task_id}.md" ]; then
+            cp "${REPO_ROOT}/tasks/${task_id}.md" "${target_dir}/tasks/"
+            log_info "已同步任务卡: tasks/${task_id}.md"
         fi
-        
+        if [ -d "${REPO_ROOT}/tasks/${task_id}" ]; then
+            cp -r "${REPO_ROOT}/tasks/${task_id}" "${target_dir}/tasks/"
+            log_info "已同步任务目录: tasks/${task_id}/"
+        fi
+
         log_success "独立工作车间创建成功！物理隔离路径: ${target_dir}"
     fi
 
     cd "${target_dir}"
 
-    # 组装 Aider 命令
+    # 3. 组装 Aider 命令
     if command -v aider >/dev/null 2>&1; then
         local aider_args=()
         
@@ -92,38 +102,131 @@ cmd_start() {
     else
         log_warn "未检测到已安装的 aider。已为你切入 Worktree 终端环境："
         echo "路径: ${target_dir}"
-        echo "你可以手动在此执行 Claude Code, omp 或其他 CLI Agent。"
-        ${SHELL:-bash}
+        echo "分支: ${branch_name}"
+        echo "你可以手动在此执行 Claude Code, OpenCode 或其他 CLI Agent。"
+        if [ -t 0 ]; then
+            ${SHELL:-bash}
+        fi
     fi
 }
 
-cmd_list() {
-    log_info "当前活跃的 Git Worktrees:"
-    git worktree list
+cmd_status() {
+    log_info "当前活跃的 Git Worktrees 与状态一览:"
+    echo "================================================================================"
+    printf "%-20s %-25s %-15s %s\n" "任务 ID" "分支" "未提交变更" "主干合并状态"
+    echo "--------------------------------------------------------------------------------"
+
+    local current_main_branch="main"
+    if ! git -C "${REPO_ROOT}" rev-parse --verify main >/dev/null 2>&1; then
+        current_main_branch="master"
+    fi
+
+    # 获取所有 worktree 列表
+    local wt_output
+    wt_output=$(git -C "${REPO_ROOT}" worktree list --porcelain)
+
+    local cur_path=""
+    local cur_branch=""
+
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^worktree\ (.*) ]]; then
+            cur_path="${BASH_REMATCH[1]}"
+        elif [[ "$line" =~ ^branch\ refs/heads/(.*) ]]; then
+            cur_branch="${BASH_REMATCH[1]}"
+        elif [[ -z "$line" && -n "$cur_path" ]]; then
+            # 仅展示 worktrees/ 目录下的任务车间
+            if [[ "$cur_path" == *"/worktrees/"* ]]; then
+                local tid
+                tid=$(basename "$cur_path")
+                
+                # 检查未提交修改 (含 untracked)
+                local uncommitted="干净 (Clean)"
+                local dirty_count
+                dirty_count=$(git -C "$cur_path" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+                if [ "$dirty_count" -gt 0 ]; then
+                    uncommitted="${dirty_count} 个修改"
+                fi
+
+                # 检查是否已合入主干
+                local merged_status="未合并"
+                if git -C "${REPO_ROOT}" branch --merged "$current_main_branch" 2>/dev/null | grep -E "(^|\s)${cur_branch}$" >/dev/null 2>&1; then
+                    merged_status="已合并"
+                fi
+
+                printf "%-20s %-25s %-15s %s\n" "$tid" "$cur_branch" "$uncommitted" "$merged_status"
+            fi
+            cur_path=""
+            cur_branch=""
+        fi
+    done <<< "$wt_output"
+    echo "================================================================================"
 }
 
-cmd_close() {
+cmd_audit() {
     local task_id="${1:?缺少 task-id 参数}"
     local target_dir="${WORKTREES_BASE}/${task_id}"
+    local audit_script="${REPO_ROOT}/scripts/audit-diffs.sh"
 
     if [ ! -d "${target_dir}" ]; then
         log_error "未找到目录: ${target_dir}"
         exit 1
     fi
 
-    log_info "正在检查是否有未提交的代码变更..."
-    if ! git -C "${target_dir}" diff-index --quiet HEAD --; then
-        log_warn "该车间存在未提交的代码修改！"
-        read -r -p "是否强制移除? [y/N] " confirm
+    log_info "正在对任务车间 [${task_id}] 进行双阶段反作弊代码审查..."
+    bash "${audit_script}" "main...HEAD" "${target_dir}/.audit"
+    log_success "审查报告就绪: 查看 ${target_dir}/.audit/code.diff 与 ${target_dir}/.audit/tests.diff"
+}
+
+cmd_close() {
+    local task_id="${1:?缺少 task-id 参数}"
+    local target_dir="${WORKTREES_BASE}/${task_id}"
+    local branch_name="feat/${task_id}"
+
+    if [ ! -d "${target_dir}" ]; then
+        log_error "未找到目录: ${target_dir}"
+        exit 1
+    fi
+
+    # 1. 严格检查工作区未提交改动 (包括追踪文件与新增未跟踪文件)
+    local dirty_changes
+    dirty_changes=$(git -C "${target_dir}" status --porcelain 2>/dev/null || true)
+    if [ -n "${dirty_changes}" ]; then
+        log_warn "该车间存在未提交的代码修改："
+        echo "${dirty_changes}"
+        read -r -p "⚠️ 确认放弃这些未提交的修改并强制清理吗? [y/N] " confirm
         if [[ ! "$confirm" =~ ^[yY]$ ]]; then
             log_info "取消清理。"
             exit 0
         fi
     fi
 
-    log_info "正在安全卸载 Worktree: ${target_dir}..."
-    git worktree remove --force "${target_dir}"
-    log_success "车间 ${task_id} 已成功注销并清理！"
+    # 2. 检查分支是否已被合并至主干
+    local current_main="main"
+    if ! git -C "${REPO_ROOT}" rev-parse --verify main >/dev/null 2>&1; then
+        current_main="master"
+    fi
+
+    local is_merged
+    is_merged=$(git -C "${REPO_ROOT}" branch --merged "${current_main}" 2>/dev/null | grep -E "(^|\s)${branch_name}$" || true)
+    if [ -z "${is_merged}" ]; then
+        log_warn "分支 [${branch_name}] 尚未合并到 ${current_main} 主干！"
+        local commit_log
+        commit_log=$(git -C "${REPO_ROOT}" log "${current_main}..${branch_name}" --oneline -n 3 2>/dev/null || true)
+        if [ -n "${commit_log}" ]; then
+            echo "未合入提交示例:"
+            echo "${commit_log}"
+        fi
+        read -r -p "⚠️ 分支未合入主干，清理后该分支的工作可能遗失，确认注销 Worktree 吗? [y/N] " confirm_merge
+        if [[ ! "$confirm_merge" =~ ^[yY]$ ]]; then
+            log_info "取消清理。"
+            exit 0
+        fi
+    fi
+
+    # 3. 安全卸载 worktree
+    log_info "正在卸载 Worktree: ${target_dir}..."
+    git -C "${REPO_ROOT}" worktree remove --force "${target_dir}"
+    log_success "车间 ${task_id} 已安全注销！"
 }
 
 # 路由分发
@@ -132,8 +235,12 @@ case "${1:-}" in
         shift
         cmd_start "$@"
         ;;
-    list)
-        cmd_list
+    status|list)
+        cmd_status
+        ;;
+    audit)
+        shift
+        cmd_audit "$@"
         ;;
     close)
         shift

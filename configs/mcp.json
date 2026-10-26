@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "biz-inspector": {
+      "command": "python3",
+      "args": ["mcp_servers/biz_inspector.py"],
+      "env": {
+        "BIZ_DB_PATH": ".biz_inspector.db"
+      }
+    },
+    "infra-devops": {
+      "command": "python3",
+      "args": ["mcp_servers/infra_devops.py"],
+      "env": {}
+    }
+  }
+}

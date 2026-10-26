@@ -1,3 +1,8 @@
 .vscode/
 build/
 .DS_Store
+__pycache__/
+*.pyc
+*.db
+.audit/
+.ci_audit/
