@@ -114,6 +114,14 @@ if [ "${MODE}" = "full" ]; then
 
     log_info "--> 部署 MCP 客户端配置文件 (configs/mcp.json)..."
     cp "${SOURCE_ROOT}/configs/mcp.json" "${TARGET_DIR}/configs/"
+
+    log_info "--> 部署方案一落地实操指南 (docs/SUPERVISOR_GUIDE.md)..."
+    mkdir -p "${TARGET_DIR}/docs"
+    cp "${SOURCE_ROOT}/docs/SUPERVISOR_GUIDE.md" "${TARGET_DIR}/docs/"
+
+    log_info "--> 部署自动化验证测试套件 (tests/test_ai_native_suite.py)..."
+    mkdir -p "${TARGET_DIR}/tests"
+    cp "${SOURCE_ROOT}/tests/test_ai_native_suite.py" "${TARGET_DIR}/tests/"
 fi
 
 # 5. 自动追加 .gitignore 规则
@@ -163,8 +171,11 @@ if [ "${MODE}" = "full" ]; then
     echo "2. 挂载 MCP 服务到 Claude Code / Cursor:"
     echo "   配置文件路径: ${TARGET_DIR}/configs/mcp.json"
     echo ""
+    echo "3. 查看方案一专属落地实操指南:"
+    echo "   📖 ${TARGET_DIR}/docs/SUPERVISOR_GUIDE.md"
+    echo ""
 fi
-echo "3. 启动 Solo 版 Worktree 多任务并行车间:"
+echo "4. 启动 Solo 版 Worktree 多任务并行车间:"
 echo "   cd ${TARGET_DIR}"
 echo "   ./scripts/solo-worktree.sh start 101-demo \"pytest\""
 echo "================================================================================"

@@ -10,7 +10,7 @@
 
 | 方案分类 | 定位与核心价值 | 核心技术栈 / 工具矩阵 | 核心资产与落地文档 |
 | :--- | :--- | :--- | :--- |
-| **1. 终态目标蓝图与实现**<br>*(Blueprint & Engine)* | 1 名人类架构师 + 4 专职 Agent 协同编排 + MCP 矩阵 + 混合算力底座的全生命周期实现 | 主控状态机调度器 + Planner / Coder / QA / DevOps 专职角色 + 熔断保护 + 安全 MCP | 📖 [目标蓝图文档](./ai_native.md)<br>🕹️ 主控调度器 [`scripts/supervisor.py`](./scripts/supervisor.py)<br>🔌 MCP 矩阵 [`mcp_servers/`](./mcp_servers/) |
+| **1. 终态目标蓝图与实现**<br>*(Blueprint & Engine)* | 1 名人类架构师 + 4 专职 Agent 协同编排 + MCP 矩阵 + 混合算力底座的全生命周期实现 | 主控状态机调度器 + Planner / Coder / QA / DevOps 专职角色 + 熔断保护 + 安全 MCP | 📖 [目标蓝图文档](./ai_native.md)<br>📘 [Supervisor 落地指南](./docs/SUPERVISOR_GUIDE.md)<br>🕹️ 主控调度器 [`scripts/supervisor.py`](./scripts/supervisor.py)<br>🔌 MCP 矩阵 [`mcp_servers/`](./mcp_servers/) |
 | **2. 个人落地指南 (阶段一)**<br>*(Solo Edition)* | 单兵多任务物理隔离并行、TDD 单测自愈闭环、本地模型分流降低算力账单 | **Aider + LiteLLM + 本地 LMStudio + Git Worktree** | 📖 [Solo Edition 指南](./docs/SOLO_EDITION_GUIDE.md)<br>🛠️ 调度器 [`scripts/solo-worktree.sh`](./scripts/solo-worktree.sh)<br>⚙️ 配置 [`configs/solo/`](./configs/solo/) |
 | **3. 企业级安全合规**<br>*(Enterprise Edition)* | 面向产研团队的统一安全审计、容器沙盒权限收敛与 CI 反作弊双阶段质量门禁 | **LiteLLM Proxy (PG 审计) + OpenHands 容器沙盒 + CI 门禁** | 📖 [Enterprise 指南](./docs/ENTERPRISE_EDITION_GUIDE.md)<br>🐳 沙盒部署 [`deploy_openhands.sh`](./deploy_openhands.sh)<br>🛡️ 门禁脚本 [`scripts/audit-diffs.sh`](./scripts/audit-diffs.sh)<br>⚙️ 部署配置 [`configs/enterprise/`](./configs/enterprise/) |
 
@@ -50,7 +50,7 @@ python3 scripts/supervisor.py create --task-id TASK-101 --title "JWT鉴权中间
 python3 scripts/supervisor.py step --task-id TASK-101
 python3 scripts/supervisor.py status --task-id TASK-101
 ```
-
+* **详细落地**：查看 [`docs/SUPERVISOR_GUIDE.md`](./docs/SUPERVISOR_GUIDE.md)。
 ---
 
 ### 2. 个人超级个体落地指南 (Solo Edition - 阶段一实操)
