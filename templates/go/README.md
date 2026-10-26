@@ -6,6 +6,8 @@
 ```bash
 # 拷贝到你的 Go 工程
 cp -R templates/go/. /path/to/my-go-project/
+cp -R templates/common/roles /path/to/my-go-project/roles/core
+cp docs/CLIENT_ADAPTERS.md /path/to/my-go-project/AI-CLIENT-ADAPTERS.md
 
 # 进入工程并初始化环境
 cd /path/to/my-go-project
@@ -14,7 +16,8 @@ bash scripts/setup-ai-env.sh
 
 ## 资产说明
 - `AGENTS.md`: 纯 Go 规则与命令速查
-- `roles/`: 五大专职角色 (主控、工兵、盲审官、记账员、支持顾问)
+- `roles/`: 语言模板提供的自动驾驶流程专用角色
+- `roles/core/`: 四个跨客户端共用角色契约
 - `skills/`:
   - `internal-codemap`: Go 模块入口与 Target 树
   - `project-develop`: Go 研发规范与单测门禁

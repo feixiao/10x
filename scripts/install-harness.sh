@@ -71,8 +71,10 @@ fi
 echo "==> [install-harness] 选择模版: [${LANG_ARG}] (${SRC_DIR})"
 echo "==> [install-harness] 目标工程: ${TARGET_DIR}"
 
-# 1. 拷贝资产
-echo "--> 1. 复制纯净 ${LANG_ARG} 资产文件..."
+# 1. 安装共用角色契约与语言套件
+echo "--> 1. 复制共用角色契约与纯净 ${LANG_ARG} 资产文件..."
+mkdir -p "$TARGET_DIR/roles/core"
+cp -R "${TEMPLATES_ROOT}/common/roles/." "$TARGET_DIR/roles/core/"
 cp -R "${SRC_DIR}/roles" "$TARGET_DIR/"
 cp -R "${SRC_DIR}/skills" "$TARGET_DIR/"
 cp -R "${SRC_DIR}/scripts" "$TARGET_DIR/"
@@ -81,6 +83,7 @@ cp "${SRC_DIR}/AGENTS.md" "$TARGET_DIR/"
 cp "${SRC_DIR}/README.md" "$TARGET_DIR/AI-HARNESS-GUIDE.md"
 [[ -d "${SRC_DIR}/config" ]] && cp -R "${SRC_DIR}/config" "$TARGET_DIR/"
 [[ -d "${SRC_DIR}/quality-gate" ]] && cp -R "${SRC_DIR}/quality-gate" "$TARGET_DIR/"
+cp "${TEMPLATES_ROOT}/../docs/CLIENT_ADAPTERS.md" "$TARGET_DIR/AI-CLIENT-ADAPTERS.md"
 
 # 2. 在目标工程运行 setup-ai-env.sh 自动建立软链接
 echo "--> 2. 触发目标工程环境初始化..."

@@ -6,6 +6,8 @@
 ```bash
 # 拷贝到你的 C++ 工程
 cp -R templates/cpp/. /path/to/my-cpp-project/
+cp -R templates/common/roles /path/to/my-cpp-project/roles/core
+cp docs/CLIENT_ADAPTERS.md /path/to/my-cpp-project/AI-CLIENT-ADAPTERS.md
 
 # 进入工程并初始化环境
 cd /path/to/my-cpp-project
@@ -14,7 +16,8 @@ bash scripts/setup-ai-env.sh
 
 ## 资产说明
 - `AGENTS.md`: 纯 C++ 规则与命令速查
-- `roles/`: 五大专职角色 (主控、工兵、盲审官、记账员、支持顾问)
+- `roles/`: 语言模板提供的自动驾驶流程专用角色
+- `roles/core/`: 四个跨客户端共用角色契约
 - `skills/`:
   - `internal-codemap`: C++ 模块入口与 Target 树
   - `project-develop`: C++ 研发规范与单测门禁
