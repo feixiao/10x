@@ -6,9 +6,8 @@
 openai-api-base: http://localhost:4000/v1
 openai-api-key: sk-dummy
 
-# 8:2 双模型架构师分工
-model: openai/coder-model               # 默认代码实现走本地 0 边际成本模型
-architect-model: openai/architect-model # 顶层架构思考走云端重推理旗舰
+# 8:2 双模型架构师分工 (在 architect 模式下，model 即为架构师主模型)
+model: openai/architect-model          # 顶层架构思考走云端重推理旗舰
 editor-model: openai/coder-model        # 编辑器应用代码走本地模型
 architect: true
 
@@ -25,3 +24,4 @@ map-tokens: 2048
 # 视觉与显示
 dark-mode: true
 show-diffs: true
+show-model-warnings: false
