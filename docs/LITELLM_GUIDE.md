@@ -239,6 +239,15 @@ model_list:
       api_key: dummy
       max_tokens: 8192
       timeout: 300
+
+  # 3. 极速响应模型 (Magpie Gemini 3.8 Flash，秒级返回，供样板代码、日志清洗与快速审查)
+  - model_name: fast-model
+    litellm_params:
+      model: openai/antigravity/gemini-3.8-flash
+      api_base: http://host.docker.internal:3425/v1
+      api_key: dummy
+      max_tokens: 8192
+      timeout: 60
 router_settings:
   routing_strategy: latency-based-routing
   num_retries: 2
