@@ -28,6 +28,14 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+try:
+    from task_builder import TaskBuilder, run_wizard
+except ImportError:
+    try:
+        from scripts.task_builder import TaskBuilder, run_wizard
+    except ImportError:
+        TaskBuilder = None
+        run_wizard = None
 
 class State(str, Enum):
     INIT = "INIT"
@@ -114,11 +122,20 @@ class Supervisor:
         ctx.history.append(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 任务初始化创建")
         self.save_task(ctx)
         
-        # 写入初始任务需求卡
+        # 写入初始任务需求卡 (若未存在)
         spec_md = self._task_dir(task_id) / "spec.md"
         if not spec_md.exists():
-            spec_md.write_text(f"# 需求契约: {title} ({task_id})\n\n{description}\n\n## 验收单测命令\n`{test_cmd}`\n", encoding="utf-8")
-        
+            if TaskBuilder is not None:
+                builder = TaskBuilder(repo_root=self.repo_root)
+                builder.create_task_contract(
+                    task_id=task_id,
+                    title=title,
+                    desc=description,
+                    test_cmd=test_cmd,
+                    use_ai=False
+                )
+            else:
+                spec_md.write_text(f"# 需求契约: {title} ({task_id})\n\n{description}\n\n## 验收单测命令\n`{test_cmd}`\n", encoding="utf-8")
         return ctx
 
     # --------------------------------------------------------------------------
@@ -485,6 +502,8 @@ def main():
     p_unblock = subparsers.add_parser("unblock", help="人类介入后解除熔断锁定")
     p_unblock.add_argument("--task-id", required=True, help="任务标识")
 
+    # new
+    subparsers.add_parser("new", help="通过交互向导创建新任务契约")
     args = parser.parse_args()
     supervisor = Supervisor()
 
@@ -522,6 +541,19 @@ def main():
     elif args.subcommand == "unblock":
         supervisor.unblock_task(args.task_id)
 
+    elif args.subcommand == "new":
+        if run_wizard is not None:
+            task_id, test_cmd = run_wizard()
+            ctx = supervisor.create_task(
+                task_id=task_id,
+                title=task_id,
+                description="向导创建任务",
+                test_cmd=test_cmd
+            )
+            print(f"✅ 状态机任务 {ctx.task_id} 已就绪！")
+            print(f"👉 执行步进: python3 scripts/supervisor.py step --task-id {ctx.task_id}")
+        else:
+            print("❌ 未检测到 task_builder 模块")
 
 if __name__ == "__main__":
     main()

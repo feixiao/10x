@@ -32,28 +32,27 @@ graph LR
 
 ## 二、 你如何控制 AI 的内容？（三大抓手）
 
-### 抓手 1：需求契约卡（用 Markdown 下死命令）
+### 抓手 1：需求契约卡（零手动写 Markdown / 智能工作流构建）
 
-不要在聊天框里给模糊指令。你在项目根目录下创建 **`tasks/<任务ID>.md`**（或参考 `tasks/template.md`），填入以下四块内容：
+以往手动写 Markdown 格式繁琐，现在提供两种极速构建方式：
 
-```markdown
-# 任务契约: 101-demo
-
-## 1. 业务目标 (做什么)
-在 `src/notify/alert.py` 中实现 ETF 溢价率超阈值告警过滤函数 `filter_high_premium_etf(quotes, threshold=0.03)`。
-
-## 2. 负向边界 / 严禁触碰 (绝对不许做什么)
-- ❌ 严禁改动已有数据库表结构与现有模型定义；
-- ❌ 严禁引入任何新的三方 pip 依赖；
-- ❌ 严禁删除或放宽 `tests/` 中的既有测试断言；
-- ❌ 代码变更行数上限: <= 120 行。
-
-## 3. 确定性验收命令 (怎么才算及格)
-pytest tests/test_etf_alert.py -v
+#### 方式 1：一句话极速创建（最快、最推荐）
+```bash
+# 格式: ./scripts/solo-worktree.sh quick <任务ID> "<一句话需求>" [单测命令]
+./scripts/solo-worktree.sh quick 101-demo "实现 ETF 溢价率超阈值告警过滤" "pytest"
 ```
+* 自动嗅探当前仓库单测框架（pytest / npm test / cargo / go）；
+* 自动注入 3 大底线负向清单（严禁改数据库、严禁删断言、严禁引新依赖）；
+* 0.05 秒生成 `tasks/101-demo.md` 并直接进入隔离工作车间。
 
-> **控制原理**：车间拉起时，会自动将该契约卡同步进隔离目录，作为 Agent 执行的唯一基准。
+#### 方式 2：命令行 3 步交互向导 (Wizard)
+```bash
+./scripts/solo-worktree.sh new
+```
+3 步问答（任务ID $\to$ 需求描述 $\to$ 验收单测），支持本地 AI 自动推导边界与行数预算。
 
+#### 方式 3：手动深度定制契约卡
+你也可以复制 `tasks/template.md` 至 `tasks/101-demo.md` 进行细颗粒度定制。
 ---
 
 ### 抓手 2：交互界面的选择（你在哪里控制它）
