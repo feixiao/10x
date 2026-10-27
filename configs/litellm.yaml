@@ -10,30 +10,30 @@
 
 model_list:
   # ----------------------------------------------------------------------------
-  # 1. 架构师主模型：Magpie 旗舰 Claude 5.5 (实测 1.1s，顶层架构与复杂重构首选)
+  # 1. 架构师主模型：Magpie 旗舰 Claude Opus 5.5 (实测 1.0s，顶层架构与复杂重构首选)
   # 注：LiteLLM 运行在 Docker 容器内，宿主机外部服务必须使用 host.docker.internal
   # ----------------------------------------------------------------------------
   - model_name: architect-model
     litellm_params:
-      model: openai/antigravity/claude-sonnet-5-5
+      model: openai/antigravity/claude-opus-5-5
       api_base: http://host.docker.internal:3425/v1
       api_key: dummy
       max_tokens: 8192
       timeout: 120
 
-  # 备选架构师模型 1: Magpie GPT-6 Luna (实测 4.5s 可用)
+  # 备选架构师模型 1: Magpie Claude Opus 4.6 (Thinking 深度推理，实测 1.9s)
   - model_name: architect-model-backup
     litellm_params:
-      model: openai/codex/gpt-6-luna
+      model: openai/antigravity/claude-opus-4-6-thinking
       api_base: http://host.docker.internal:3425/v1
       api_key: dummy
       max_tokens: 8192
       timeout: 120
 
-  # 备选架构师模型 2: Magpie Gemini 3.8 Flash (实测 3.6s 可用)
+  # 备选架构师模型 2: Magpie GPT-6 Luna (实测 4.5s 可用)
   - model_name: architect-model-fast
     litellm_params:
-      model: openai/antigravity/gemini-3.8-flash
+      model: openai/codex/gpt-6-luna
       api_base: http://host.docker.internal:3425/v1
       api_key: dummy
       max_tokens: 8192

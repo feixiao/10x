@@ -203,18 +203,27 @@ cd ~/litellm-gateway && docker compose -f docker-compose.quickstart.yml up -d
 #### 统一配置结构剖析 (`configs/litellm.yaml`)
 ```yaml
 model_list:
-  # 1. 架构师主模型 (Magpie Claude 5.5，实测 1.1s)
+  # 1. 架构师主模型 (Magpie Claude Opus 5.5，实测 1.0s)
   # 容器访问宿主机外部服务必须使用 host.docker.internal
   - model_name: architect-model
     litellm_params:
-      model: openai/antigravity/claude-sonnet-5-5
+      model: openai/antigravity/claude-opus-5-5
       api_base: http://host.docker.internal:3425/v1
       api_key: dummy
       max_tokens: 8192
       timeout: 120
 
-  # 备选架构师模型 (GPT-6 Luna / Gemini 3.8 Flash)
+  # 备选架构师模型 1 (Magpie Claude Opus 4.6 Thinking，实测 1.9s)
   - model_name: architect-model-backup
+    litellm_params:
+      model: openai/antigravity/claude-opus-4-6-thinking
+      api_base: http://host.docker.internal:3425/v1
+      api_key: dummy
+      max_tokens: 8192
+      timeout: 120
+
+  # 备选架构师模型 2 (GPT-6 Luna，实测 4.5s)
+  - model_name: architect-model-fast
     litellm_params:
       model: openai/codex/gpt-6-luna
       api_base: http://host.docker.internal:3425/v1
