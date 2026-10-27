@@ -22,11 +22,34 @@ from typing import Dict, Optional, Tuple
 
 
 class TaskBuilder:
-    def __init__(self, repo_root: Optional[Path] = None):
-        self.repo_root = repo_root or Path(__file__).resolve().parent.parent
-        self.tasks_dir = self.repo_root / "tasks"
-        self.tasks_dir.mkdir(parents=True, exist_ok=True)
+    def __init__(self, repo_root: Optional[Path] = None, tenx_dir: Optional[Path] = None):
+        script_dir = Path(__file__).resolve().parent
+        if repo_root:
+            self.repo_root = repo_root
+        else:
+            cur = script_dir
+            found = None
+            for p in [cur] + list(cur.parents):
+                if (p / ".git").exists():
+                    found = p
+                    break
+            self.repo_root = found or script_dir.parent
 
+        if tenx_dir:
+            self.tenx_dir = tenx_dir
+        elif (self.repo_root / ".10x").is_dir():
+            self.tenx_dir = self.repo_root / ".10x"
+        elif script_dir.name in ("bin", "scripts") and script_dir.parent.name.endswith("10x"):
+            self.tenx_dir = script_dir.parent
+        else:
+            self.tenx_dir = self.repo_root
+
+        if (self.tenx_dir / "tasks").exists() or (self.tenx_dir != self.repo_root):
+            self.tasks_dir = self.tenx_dir / "tasks"
+        else:
+            self.tasks_dir = self.repo_root / "tasks"
+
+        self.tasks_dir.mkdir(parents=True, exist_ok=True)
     def detect_test_command(self) -> str:
         """自动根据仓库配置文件与目录结构嗅探测试套件命令"""
         # Python
@@ -112,6 +135,8 @@ class TaskBuilder:
         extra_non_goals: Optional[list] = None
     ) -> str:
         """生成确定性标准安全任务契约"""
+        cli_prefix = "./.10x/10x" if (self.repo_root / ".10x").is_dir() else "./scripts/solo-worktree.sh"
+        sup_prefix = "./.10x/10x supervisor" if (self.repo_root / ".10x").is_dir() else "python3 scripts/supervisor.py"
         desc_text = desc.strip() if desc.strip() else f"实现 {title} 核心功能并通过测试。"
         non_goals = [
             "❌ 严禁破坏既有数据库表结构与现有模型定义；",
@@ -159,11 +184,11 @@ class TaskBuilder:
 
 ## 5. 快速启动车间
 ```bash
-# Solo 版隔离车间:
-./scripts/solo-worktree.sh start {task_id} "{test_cmd}"
+# 启动工作车间:
+{cli_prefix} start {task_id} "{test_cmd}"
 
 # 状态机全生命周期调度:
-python3 scripts/supervisor.py create --task-id {task_id} --title "{title}" --test-cmd "{test_cmd}"
+{sup_prefix} create --task-id {task_id} --title "{title}" --test-cmd "{test_cmd}"
 ```
 """
         return content
@@ -203,7 +228,7 @@ python3 scripts/supervisor.py create --task-id {task_id} --title "{title}" --tes
 
 ## 5. 快速启动车间
 ```bash
-./scripts/solo-worktree.sh start {task_id} "{final_test_cmd}"
+{"./.10x/10x" if (self.repo_root / ".10x").is_dir() else "./scripts/solo-worktree.sh"} start {task_id} "{final_test_cmd}"
 ```
 """
 

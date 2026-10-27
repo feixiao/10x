@@ -38,21 +38,21 @@ graph LR
 
 #### 方式 1：一句话极速创建（最快、最推荐）
 ```bash
-# 格式: ./scripts/solo-worktree.sh quick <任务ID> "<一句话需求>" [单测命令]
-./scripts/solo-worktree.sh quick 101-demo "实现 ETF 溢价率超阈值告警过滤" "pytest"
+# 格式: ./.10x/10x quick <任务ID> "<一句话需求>" [单测命令]
+./.10x/10x quick 101-demo "实现 ETF 溢价率超阈值告警过滤" "pytest"
 ```
 * 自动嗅探当前仓库单测框架（pytest / npm test / cargo / go）；
 * 自动注入 3 大底线负向清单（严禁改数据库、严禁删断言、严禁引新依赖）；
-* 0.05 秒生成 `tasks/101-demo.md` 并直接进入隔离工作车间。
+* 0.05 秒生成 `.10x/tasks/101-demo.md` 并直接进入隔离工作车间。
 
 #### 方式 2：命令行 3 步交互向导 (Wizard)
 ```bash
-./scripts/solo-worktree.sh new
+./.10x/10x new
 ```
 3 步问答（任务ID $\to$ 需求描述 $\to$ 验收单测），支持本地 AI 自动推导边界与行数预算。
 
 #### 方式 3：手动深度定制契约卡
-你也可以复制 `tasks/template.md` 至 `tasks/101-demo.md` 进行细颗粒度定制。
+你也可以复制 `.10x/tasks/template.md` 至 `.10x/tasks/101-demo.md` 进行细颗粒度定制。
 ---
 
 ### 抓手 2：交互界面的选择（你在哪里控制它）
@@ -71,13 +71,12 @@ code /Users/frank/wk/codeup/adviser/worktrees/101-demo
 * **Composer / Chat**：唤起 Agent 对话，直接让它读 `tasks/101-demo.md`；
 * **Git 高亮**：每一处改动都在编辑器边栏高亮显示，随时人工接管修改。
 
-#### 方式 B：终端 Aider 交互模式（闭环自愈）
+#### 方式 B：终端 Aider 交互模式（直连本地 LiteLLM 网关闭环自愈）
 
-如果你习惯终端，直接运行：
+所有请求强制直连本地 LiteLLM 统一网关 (`:4000`)，无需任何外部 OpenRouter 账号：
 ```bash
-./scripts/solo-worktree.sh start 101-demo "pytest tests/test_demo.py"
+./.10x/10x start 101-demo "pytest tests/test_demo.py"
 ```
-终端进入 Aider 交互提示符：
 ```text
 > /add tasks/101-demo.md
 > /add src/demo.py tests/test_demo.py

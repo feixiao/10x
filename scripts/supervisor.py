@@ -79,12 +79,39 @@ class TaskContext:
 
 
 class Supervisor:
-    def __init__(self, repo_root: Optional[Path] = None):
-        self.repo_root = repo_root or Path(__file__).resolve().parent.parent
-        self.tasks_dir = self.repo_root / "tasks"
-        self.worktrees_dir = self.repo_root.parent / "worktrees"
-        self.audit_script = self.repo_root / "scripts" / "audit-diffs.sh"
+    def __init__(self, repo_root: Optional[Path] = None, tenx_dir: Optional[Path] = None):
+        script_dir = Path(__file__).resolve().parent
+        if repo_root:
+            self.repo_root = repo_root
+        else:
+            cur = script_dir
+            found = None
+            for p in [cur] + list(cur.parents):
+                if (p / ".git").exists():
+                    found = p
+                    break
+            self.repo_root = found or script_dir.parent
 
+        if tenx_dir:
+            self.tenx_dir = tenx_dir
+        elif (self.repo_root / ".10x").is_dir():
+            self.tenx_dir = self.repo_root / ".10x"
+        elif script_dir.name in ("bin", "scripts") and script_dir.parent.name.endswith("10x"):
+            self.tenx_dir = script_dir.parent
+        else:
+            self.tenx_dir = self.repo_root
+
+        if (self.tenx_dir / "tasks").exists() or (self.tenx_dir != self.repo_root):
+            self.tasks_dir = self.tenx_dir / "tasks"
+        else:
+            self.tasks_dir = self.repo_root / "tasks"
+
+        self.worktrees_dir = self.repo_root.parent / "worktrees"
+        self.audit_script = script_dir / "audit-diffs.sh"
+        if not self.audit_script.exists():
+            self.audit_script = self.tenx_dir / "bin" / "audit-diffs.sh"
+        if not self.audit_script.exists():
+            self.audit_script = self.repo_root / "scripts" / "audit-diffs.sh"
     def _task_dir(self, task_id: str) -> Path:
         d = self.tasks_dir / task_id
         d.mkdir(parents=True, exist_ok=True)

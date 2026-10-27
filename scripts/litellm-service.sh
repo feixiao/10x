@@ -7,11 +7,28 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# 自动定位 TENX_DIR 与 REPO_ROOT
+if [[ "$(basename "$(dirname "${SCRIPT_DIR}")")" =~ ^\.?10x$ ]]; then
+    TENX_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+    REPO_ROOT="$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel 2>/dev/null || (cd "${TENX_DIR}/.." && pwd))"
+elif [[ "$(basename "${SCRIPT_DIR}")" =~ ^\.?10x$ ]]; then
+    TENX_DIR="${SCRIPT_DIR}"
+    REPO_ROOT="$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel 2>/dev/null || (cd "${TENX_DIR}/.." && pwd))"
+else
+    REPO_ROOT="$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel 2>/dev/null || (cd "${SCRIPT_DIR}/.." && pwd))"
+    if [ -d "${REPO_ROOT}/.10x" ]; then
+        TENX_DIR="${REPO_ROOT}/.10x"
+    else
+        TENX_DIR="${REPO_ROOT}"
+    fi
+fi
 
 PORT="${LITELLM_PORT:-4000}"
-CONFIG_FILE="${LITELLM_CONFIG:-${REPO_ROOT}/configs/litellm.yaml}"
-RUN_DIR="${REPO_ROOT}/.litellm"
+CONFIG_FILE="${LITELLM_CONFIG:-${TENX_DIR}/configs/litellm.yaml}"
+[ ! -f "${CONFIG_FILE}" ] && CONFIG_FILE="${REPO_ROOT}/configs/litellm.yaml"
+
+RUN_DIR="${TENX_DIR}/.litellm"
 PID_FILE="${RUN_DIR}/litellm.pid"
 LOG_FILE="${RUN_DIR}/litellm.log"
 

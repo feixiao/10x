@@ -11,9 +11,37 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# 自动定位 TENX_DIR 与 REPO_ROOT (支持集中化 .10x 部署与源码部署两种模式)
+if [[ "$(basename "$(dirname "${SCRIPT_DIR}")")" =~ ^\.?10x$ ]]; then
+    TENX_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+    REPO_ROOT="$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel 2>/dev/null || (cd "${TENX_DIR}/.." && pwd))"
+elif [[ "$(basename "${SCRIPT_DIR}")" =~ ^\.?10x$ ]]; then
+    TENX_DIR="${SCRIPT_DIR}"
+    REPO_ROOT="$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel 2>/dev/null || (cd "${TENX_DIR}/.." && pwd))"
+else
+    REPO_ROOT="$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel 2>/dev/null || (cd "${SCRIPT_DIR}/.." && pwd))"
+    if [ -d "${REPO_ROOT}/.10x" ]; then
+        TENX_DIR="${REPO_ROOT}/.10x"
+    else
+        TENX_DIR="${REPO_ROOT}"
+    fi
+fi
+
 WORKTREES_BASE="${REPO_ROOT}/../worktrees"
 
+# 统一定位 tasks 与 configs
+if [ -d "${TENX_DIR}/tasks" ]; then
+    TASKS_DIR="${TENX_DIR}/tasks"
+else
+    TASKS_DIR="${REPO_ROOT}/tasks"
+fi
+
+if [ -d "${TENX_DIR}/configs" ]; then
+    CONFIGS_DIR="${TENX_DIR}/configs"
+else
+    CONFIGS_DIR="${REPO_ROOT}/configs"
+fi
 # 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -77,7 +105,7 @@ cmd_start() {
             git -C "${REPO_ROOT}" worktree add -b "${branch_name}" "${target_dir}" HEAD
         fi
         # 2. 检查并跨工作区自动同步任务契约规范卡 (若不存在则自动智能补齐)
-        if [ ! -f "${REPO_ROOT}/tasks/${task_id}.md" ] && [ ! -d "${REPO_ROOT}/tasks/${task_id}" ]; then
+        if [ ! -f "${TASKS_DIR}/${task_id}.md" ] && [ ! -d "${TASKS_DIR}/${task_id}" ]; then
             if [ -f "${SCRIPT_DIR}/task_builder.py" ]; then
                 local default_desc="${3:-实现 ${task_id} 核心功能并通过单测}"
                 log_info "未检测到 tasks/${task_id}.md，自动生成标准安全任务契约规范卡..."
@@ -86,12 +114,12 @@ cmd_start() {
         fi
 
         mkdir -p "${target_dir}/tasks"
-        if [ -f "${REPO_ROOT}/tasks/${task_id}.md" ]; then
-            cp "${REPO_ROOT}/tasks/${task_id}.md" "${target_dir}/tasks/"
+        if [ -f "${TASKS_DIR}/${task_id}.md" ]; then
+            cp "${TASKS_DIR}/${task_id}.md" "${target_dir}/tasks/"
             log_info "已同步任务卡: tasks/${task_id}.md"
         fi
-        if [ -d "${REPO_ROOT}/tasks/${task_id}" ]; then
-            cp -r "${REPO_ROOT}/tasks/${task_id}" "${target_dir}/tasks/"
+        if [ -d "${TASKS_DIR}/${task_id}" ]; then
+            cp -r "${TASKS_DIR}/${task_id}" "${target_dir}/tasks/"
             log_info "已同步任务目录: tasks/${task_id}/"
         fi
         # 3. 自动建立核心依赖目录软链接 (node_modules, .venv, venv)
@@ -111,11 +139,19 @@ cmd_start() {
     if command -v aider >/dev/null 2>&1; then
         local aider_args=()
         
-        # 优先读取 configs/.aider.conf.yml 或 .aider.conf.yml
-        if [ -f "${REPO_ROOT}/configs/.aider.conf.yml" ]; then
+        # 强制锁定本地 LiteLLM 网关 (:4000)，严禁回退弹窗至 OpenRouter
+        export OPENAI_API_BASE="${OPENAI_API_BASE:-http://localhost:4000/v1}"
+        export OPENAI_API_KEY="${OPENAI_API_KEY:-sk-dummy}"
+
+        # 优先读取集中化目录配置 .10x/configs/.aider.conf.yml
+        if [ -f "${CONFIGS_DIR}/.aider.conf.yml" ]; then
+            aider_args+=("--config" "${CONFIGS_DIR}/.aider.conf.yml")
+        elif [ -f "${REPO_ROOT}/configs/.aider.conf.yml" ]; then
             aider_args+=("--config" "${REPO_ROOT}/configs/.aider.conf.yml")
         elif [ -f "${REPO_ROOT}/.aider.conf.yml" ]; then
             aider_args+=("--config" "${REPO_ROOT}/.aider.conf.yml")
+        else
+            aider_args+=("--openai-api-base" "${OPENAI_API_BASE}" "--model" "openai/coder-model")
         fi
 
         # 挂载自动单测门禁
@@ -124,7 +160,7 @@ cmd_start() {
             aider_args+=("--test-cmd" "${test_cmd}" "--auto-test")
         fi
 
-        log_info "正在启动 Aider (按 Ctrl+D 或 /exit 退出)..."
+        log_info "正在启动 Aider 直连 LiteLLM 网关 (:4000) (按 Ctrl+D 或 /exit 退出)..."
         aider "${aider_args[@]}"
     else
         log_warn "未检测到已安装的 aider。已为你切入 Worktree 终端环境："
@@ -211,7 +247,13 @@ cmd_new() {
 cmd_audit() {
     local task_id="${1:?缺少 task-id 参数}"
     local target_dir="${WORKTREES_BASE}/${task_id}"
-    local audit_script="${REPO_ROOT}/scripts/audit-diffs.sh"
+    local audit_script="${SCRIPT_DIR}/audit-diffs.sh"
+    if [ ! -f "${audit_script}" ]; then
+        audit_script="${TENX_DIR}/bin/audit-diffs.sh"
+    fi
+    if [ ! -f "${audit_script}" ]; then
+        audit_script="${REPO_ROOT}/scripts/audit-diffs.sh"
+    fi
 
     if [ ! -d "${target_dir}" ]; then
         log_error "未找到目录: ${target_dir}"
