@@ -157,7 +157,19 @@ cmd_start() {
             aider_args+=("--test-cmd" "${test_cmd}" "--auto-test")
         fi
 
-        log_info "正在启动 Aider 直连 LiteLLM 网关 (:4000) (按 Ctrl+D 或 /exit 退出)..."
+        # 自动载入任务契约卡作为只读上下文并抑制交互干扰
+        if [ -f "${target_dir}/tasks/${task_id}.md" ]; then
+            aider_args+=("--read" "tasks/${task_id}.md")
+        fi
+        aider_args+=("--no-gitignore")
+
+        echo "================================================================================"
+        echo -e "${GREEN}💡 车间已就绪！你在下面的提示符后直接说人话即可：${NC}"
+        echo "   👉 输入需求示例: 请根据 tasks/${task_id}.md 编写实现与单测"
+        echo "   👉 添加现有文件给AI看: /add <文件路径>"
+        echo "   👉 退出当前车间: 输入 /exit 或按 Ctrl+D"
+        echo "   👉 (不想用命令行？随时另开终端用 GUI 开发: cursor ${target_dir})"
+        echo "================================================================================"
         aider "${aider_args[@]}"
     else
         log_warn "未检测到已安装的 aider。已为你切入 Worktree 终端环境："
