@@ -27,7 +27,7 @@ usage() {
   $0 audit <task-id>                          执行双阶段反作弊代码审查 (切分业务与测试)
   $0 close <task-id>                          安全清理已完成的任务车间
   $0 supervisor [step|run|status|unblock|new] 调度方案一多角色主控状态机
-  $0 litellm [start|stop|restart|status|logs] 管理本地模型统一网关守护服务
+  $0 gateway                                  检查本机全局 LiteLLM 网关运行状态
 
 示例:
   $0 quick 101-demo "实现 ETF 溢价率告警" "pytest"
@@ -55,8 +55,12 @@ case "${1:-}" in
         exec python3 "${BIN_DIR}/supervisor.py" "$@"
         ;;
     litellm|gateway)
-        shift
-        exec "${BIN_DIR}/litellm-service.sh" "$@"
+        echo "--> 正在检查本机全局 LiteLLM 网关 (:4000)..."
+        if curl -s -m 1 "http://127.0.0.1:4000/health" >/dev/null 2>&1; then
+            echo "✅ 本机全局 LiteLLM 网关运行正常 (http://127.0.0.1:4000)"
+        else
+            echo "⚠️  未检测到本机运行的 LiteLLM 网关服务，请确保宿主机已开启模型代理 (http://127.0.0.1:4000)"
+        fi
         ;;
     -h|--help|help)
         usage

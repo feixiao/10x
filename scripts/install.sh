@@ -114,15 +114,11 @@ cp "${SOURCE_ROOT}/docs/SOLO_EDITION_GUIDE.md" "${TENX_TARGET}/docs/"
 
 # 4. 根据模式分流安装
 if [ "${MODE}" = "full" ] || [ "${MODE}" = "solo" ]; then
-    log_info "--> 部署 Solo 版 Git Worktree 调度器与 LiteLLM 服务管理脚本..."
+    log_info "--> 部署 Solo 版 Git Worktree 调度器与客户端配置..."
     cp "${SOURCE_ROOT}/scripts/solo-worktree.sh" "${TENX_TARGET}/bin/"
     chmod +x "${TENX_TARGET}/bin/solo-worktree.sh"
-    cp "${SOURCE_ROOT}/scripts/litellm-service.sh" "${TENX_TARGET}/bin/"
-    chmod +x "${TENX_TARGET}/bin/litellm-service.sh"
     
-    cp "${SOURCE_ROOT}/configs/litellm.yaml" "${TENX_TARGET}/configs/"
     cp "${SOURCE_ROOT}/configs/.aider.conf.yml" "${TENX_TARGET}/configs/"
-    cp "${SOURCE_ROOT}/configs/docker-compose.yml" "${TENX_TARGET}/configs/"
 fi
 
 if [ "${MODE}" = "full" ]; then
@@ -160,7 +156,6 @@ append_ignore_if_missing() {
     fi
 }
 
-append_ignore_if_missing "${DEST_NAME}/.litellm/"
 append_ignore_if_missing "${DEST_NAME}/tasks/*/.audit/"
 append_ignore_if_missing "circuit_breaker_*.json"
 append_ignore_if_missing "*.db"

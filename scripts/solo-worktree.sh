@@ -84,12 +84,9 @@ cmd_start() {
     local target_dir="${WORKTREES_BASE}/${task_id}"
     local branch_name="feat/${task_id}"
 
-    # 0. 自动探活并在未启动时自动拉起常驻后台网关
+    # 0. 检查本机全局 LiteLLM 模型网关探活 (:4000)
     if ! curl -s -m 1 "http://127.0.0.1:4000/health" >/dev/null 2>&1; then
-        if [ -x "${SCRIPT_DIR}/litellm-service.sh" ]; then
-            log_info "检测到 LiteLLM 网关 (:4000) 未在运行，自动在后台拉起常驻服务..."
-            "${SCRIPT_DIR}/litellm-service.sh" start >/dev/null 2>&1 || true
-        fi
+        log_warn "未检测到本机运行的 LiteLLM 网关 (:4000)，请确保宿主机已开启模型服务 (http://127.0.0.1:4000)。"
     fi
     if [ -d "${target_dir}" ]; then
         log_warn "工作目录已存在: ${target_dir}，直接切换进入..."
