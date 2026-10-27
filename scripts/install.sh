@@ -4,8 +4,8 @@
 # 
 # 用法:
 #   ./scripts/install.sh /path/to/my-project
-#   ./scripts/install.sh /path/to/my-project --mode=solo       # 仅安装个人版
-#   ./scripts/install.sh /path/to/my-project --mode=full       # 全量安装方案一与方案二 (默认)
+#   ./scripts/install.sh /path/to/my-project                   # 默认轻量安装 Solo 个人版 (集中收敛于 .10x)
+#   ./scripts/install.sh /path/to/my-project --mode=full       # 全量安装状态机调度器与 MCP 矩阵
 # ==============================================================================
 
 set -euo pipefail
@@ -35,8 +35,8 @@ AI-Native 全生命周期研发套件一键部署工具
 
 参数说明:
   目标工程路径   待接入 AI-Native 研发能力的外部项目根目录
-  --mode=full    全量安装：主控状态机调度器 + MCP 矩阵服务 + Solo 工作车间 (默认)
-  --mode=solo    轻量安装：仅安装 Solo Worktree 并行调度器与配置
+  --mode=solo    轻量安装：仅安装 Solo Worktree 并行调度器与配置 (默认)
+  --mode=full    全量安装：主控状态机调度器 + MCP 矩阵服务 + Solo 工作车间
   --dest=<dir>   集中管理目录名称 (默认: .10x，绝不污染源项目原有根目录)
 
 示例:
@@ -48,7 +48,7 @@ EOF
 
 # 1. 参数解析
 TARGET_DIR="${1:-}"
-MODE="full"
+MODE="solo"
 DEST_NAME=".10x"
 
 if [ -z "${TARGET_DIR}" ] || [[ "${TARGET_DIR}" =~ ^- ]]; then

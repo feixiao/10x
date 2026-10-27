@@ -47,6 +47,11 @@ case "${1:-}" in
         ;;
     supervisor)
         shift
+        if [ ! -f "${BIN_DIR}/supervisor.py" ]; then
+            echo "⚠️  当前项目采用轻量 Solo 模式安装，未包含 supervisor 状态机。"
+            echo "👉 如需使用四角色状态机与安全 MCP 矩阵，请执行: ./install.sh <目标工程> --mode=full"
+            exit 1
+        fi
         exec python3 "${BIN_DIR}/supervisor.py" "$@"
         ;;
     litellm|gateway)

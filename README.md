@@ -22,13 +22,13 @@
 你可以直接使用本项目提供的一键安装脚本，秒级将方案一（Supervisor + MCP 矩阵）或方案二（Solo Worktree）注入到你的任何工程中：
 
 ```bash
-# 全量安装（主控状态机调度器 + 业务与运维 MCP 矩阵 + Solo 工作车间）
+# 默认轻量安装（仅安装 Solo 多任务 Worktree 并行调度器与配置，集中收敛至 .10x/）
 ./install.sh /path/to/my-other-project
 
-# 轻量安装（仅安装 Solo 多任务 Worktree 并行调度器）
-./install.sh /path/to/my-other-project --mode=solo
+# 全量安装（包含主控状态机调度器 + 业务与运维 MCP 矩阵 + Solo 工作车间）
+./install.sh /path/to/my-other-project --mode=full
 ```
-*脚本会自动复制脚本与配置、配置可执行权限，并在目标项目的 `.gitignore` 中注册安全规则。*
+*脚本会自动将全部工具集中部署在目标项目的 `.10x/` 目录中，不污染原项目根目录，并在目标项目的 `.gitignore` 中注册安全规则。*
 
 ---
 ## 一、方案概要与快速上手
