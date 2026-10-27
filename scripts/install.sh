@@ -79,15 +79,20 @@ log_info "    来源代码仓: ${SOURCE_ROOT}"
 log_info "    目标工程路径: ${TARGET_DIR}"
 log_info "    安装模式: [${MODE}]"
 
-# 2. 基础目录初始化
 mkdir -p "${TARGET_DIR}/scripts"
 mkdir -p "${TARGET_DIR}/tasks"
 mkdir -p "${TARGET_DIR}/configs"
+mkdir -p "${TARGET_DIR}/docs"
 
-# 3. 部署双阶段审查与通用脚本
-log_info "--> 部署通用脚本..."
+# 3. 部署双阶段审查、任务契约卡与通用实操文档
+log_info "--> 部署通用脚本与任务契约规范模板..."
 cp "${SOURCE_ROOT}/scripts/audit-diffs.sh" "${TARGET_DIR}/scripts/"
 chmod +x "${TARGET_DIR}/scripts/audit-diffs.sh"
+cp "${SOURCE_ROOT}/tasks/template.md" "${TARGET_DIR}/tasks/"
+
+log_info "--> 部署端到端实操与控制指南文档..."
+cp "${SOURCE_ROOT}/docs/PRACTICAL_WORKFLOW_GUIDE.md" "${TARGET_DIR}/docs/"
+cp "${SOURCE_ROOT}/docs/SOLO_EDITION_GUIDE.md" "${TARGET_DIR}/docs/"
 
 # 4. 根据模式分流安装
 if [ "${MODE}" = "full" ] || [ "${MODE}" = "solo" ]; then
@@ -113,21 +118,18 @@ if [ "${MODE}" = "full" ]; then
     cp -r "${SOURCE_ROOT}/mcp_servers/." "${TARGET_DIR}/mcp_servers/"
     chmod +x "${TARGET_DIR}/mcp_servers/"*.py
 
-    log_info "--> 部署任务契约规范模板 (tasks/template.md)..."
-    cp "${SOURCE_ROOT}/tasks/template.md" "${TARGET_DIR}/tasks/"
-
     log_info "--> 部署 MCP 客户端配置文件 (configs/mcp.json)..."
     cp "${SOURCE_ROOT}/configs/mcp.json" "${TARGET_DIR}/configs/"
-    log_info "--> 部署落地实操指南 (docs/SUPERVISOR_GUIDE.md, docs/LITELLM_GUIDE.md)..."
-    mkdir -p "${TARGET_DIR}/docs"
+
+    log_info "--> 部署状态机与企业级网关指南 (docs/SUPERVISOR_GUIDE.md, docs/LITELLM_GUIDE.md)..."
     cp "${SOURCE_ROOT}/docs/SUPERVISOR_GUIDE.md" "${TARGET_DIR}/docs/"
     cp "${SOURCE_ROOT}/docs/LITELLM_GUIDE.md" "${TARGET_DIR}/docs/"
+    [ -f "${SOURCE_ROOT}/docs/ENTERPRISE_EDITION_GUIDE.md" ] && cp "${SOURCE_ROOT}/docs/ENTERPRISE_EDITION_GUIDE.md" "${TARGET_DIR}/docs/"
 
     log_info "--> 部署自动化验证测试套件 (tests/test_ai_native_suite.py)..."
     mkdir -p "${TARGET_DIR}/tests"
     cp "${SOURCE_ROOT}/tests/test_ai_native_suite.py" "${TARGET_DIR}/tests/"
 fi
-
 # 5. 自动追加 .gitignore 规则
 GITIGNORE_FILE="${TARGET_DIR}/.gitignore"
 log_info "--> 检查并更新 .gitignore 安全规则..."
@@ -165,22 +167,32 @@ fi
 log_success "🎉 部署完成！"
 echo ""
 echo "================================================================================"
-echo "🎯 下一步操作指引:"
+echo "🎯 极简实战上手与内容控制指引:"
 echo "--------------------------------------------------------------------------------"
+echo "1. 制定需求契约卡 (控制 AI 改动范围与负向边界):"
+echo "   cp ${TARGET_DIR}/tasks/template.md ${TARGET_DIR}/tasks/101-demo.md"
+echo "   # 编辑 tasks/101-demo.md，填入：做哪些、严禁改哪些、单测验收命令"
+echo ""
+echo "2. 启动物理隔离车间 (多任务独立目录，不污染主干):"
+echo "   cd ${TARGET_DIR}"
+echo "   ./scripts/solo-worktree.sh start 101-demo \"pytest\""
+echo ""
+echo "3. 可视化查看与交互 (看得清清楚楚):"
+echo "   另开终端打开独立工作目录: cursor ../worktrees/101-demo (或 code ../worktrees/101-demo)"
+echo ""
+echo "4. 反作弊代码审计 (防 AI 偷删单测断言):"
+echo "   ./scripts/solo-worktree.sh audit 101-demo"
+echo "   # 查看生成的 .audit/code.diff (纯业务) 与 .audit/tests.diff (测试用例)"
+echo ""
 if [ "${MODE}" = "full" ]; then
-    echo "1. 启动方案一状态机调度任务:"
-    echo "   cd ${TARGET_DIR}"
+    echo "5. 全自动四角色状态机流水线 (可选高级模式):"
     echo "   python3 scripts/supervisor.py create --task-id 101-demo --title \"示例特性\" --test-cmd \"pytest\""
     echo "   python3 scripts/supervisor.py step --task-id 101-demo"
     echo ""
-    echo "2. 挂载 MCP 服务到 Claude Code / Cursor:"
-    echo "   配置文件路径: ${TARGET_DIR}/configs/mcp.json"
+    echo "6. 挂载 MCP 服务到 Claude Code / Cursor:"
+    echo "   配置文件: ${TARGET_DIR}/configs/mcp.json"
     echo ""
-    echo "3. 查看落地实操指南:"
-    echo "   📖 状态机指南: ${TARGET_DIR}/docs/SUPERVISOR_GUIDE.md"
-    echo "   📖 LiteLLM 网关: ${TARGET_DIR}/docs/LITELLM_GUIDE.md"
 fi
-echo "4. 启动 Solo 版 Worktree 多任务并行车间:"
-echo "   cd ${TARGET_DIR}"
-echo "   ./scripts/solo-worktree.sh start 101-demo \"pytest\""
+echo "📖 必读：完整实战与内容控制指南:"
+echo "   ${TARGET_DIR}/docs/PRACTICAL_WORKFLOW_GUIDE.md"
 echo "================================================================================"
