@@ -167,7 +167,7 @@ python3 scripts/supervisor.py unblock --task-id TASK-101
 
 - [x] **第一阶段：单兵外骨骼与自愈闭环（已在方案二 Solo Edition 落地）**
   - [x] Git Worktree 物理隔离与状态调度器 (`scripts/solo-worktree.sh`)
-  - [x] 双模型混合分流配置 (`configs/solo/litellm.yaml` + `.aider.conf.yml`)
+  - [x] 双模型混合分流配置 (`configs/litellm.yaml` + `configs/.aider.conf.yml`)
   - [x] 双阶段反作弊代码与测试物理隔离门禁 (`scripts/audit-diffs.sh`)
 - [x] **第二阶段：MCP 神经系统与安全护栏（已在本方案落地）**
   - [x] 业务只读排查与防注入 MCP (`mcp_servers/biz_inspector.py`)

@@ -1,0 +1,73 @@
+# ==============================================================================
+# configs/litellm.yaml - 10x 统一模型网关配置 (Solo & Enterprise 合一版)
+# ==============================================================================
+# 职责：
+# 1. 8:2 混合算力智能分流 (云端重推理 20% + 本地 0 边际成本 80%)
+# 2. 毫秒级故障自动转移 (Fallbacks) 与延迟路由
+# 3. 抹平参数差异 (drop_params: true) 与双向协议归一化 (OpenAI / Anthropic)
+# 4. 支持本地极速直通，亦支持注入环境变量无缝升级为企业级数据库审计与虚拟 Key 鉴权
+# ==============================================================================
+
+model_list:
+  # ----------------------------------------------------------------------------
+  # 1. 架构师主模型：Magpie 旗舰 Claude 5.5 (实测 1.1s，顶层架构与复杂重构首选)
+  # ----------------------------------------------------------------------------
+  - model_name: architect-model
+    litellm_params:
+      model: openai/antigravity/claude-sonnet-5-5
+      api_base: http://127.0.0.1:3425/v1
+      api_key: dummy
+      max_tokens: 8192
+      timeout: 120
+
+  # 备选架构师模型 1: Magpie GPT-6 Luna (实测 4.5s 可用)
+  - model_name: architect-model-backup
+    litellm_params:
+      model: openai/codex/gpt-6-luna
+      api_base: http://127.0.0.1:3425/v1
+      api_key: dummy
+      max_tokens: 8192
+      timeout: 120
+
+  # 备选架构师模型 2: Magpie Gemini 3.8 Flash (实测 3.6s 可用)
+  - model_name: architect-model-fast
+    litellm_params:
+      model: openai/antigravity/gemini-3.8-flash
+      api_base: http://127.0.0.1:3425/v1
+      api_key: dummy
+      max_tokens: 8192
+      timeout: 120
+
+  # ----------------------------------------------------------------------------
+  # 2. 编码主模型：LMStudio 本地已加载 Qwen3.8-27B (思考+生成约 80s，设 300s 超时)
+  # ----------------------------------------------------------------------------
+  - model_name: coder-model
+    litellm_params:
+      model: openai/qwen3.8-27b-splash
+      api_base: http://127.0.0.1:1234/v1
+      api_key: dummy
+      max_tokens: 8192
+      timeout: 300
+
+  # 编码降级备选：Magpie Gemini 3.8 Flash (当本地显存不足或异常超时，自动快速接管)
+  - model_name: coder-model-backup
+    litellm_params:
+      model: openai/antigravity/gemini-3.8-flash
+      api_base: http://127.0.0.1:3425/v1
+      api_key: dummy
+      max_tokens: 8192
+      timeout: 120
+
+router_settings:
+  routing_strategy: latency-based-routing
+  num_retries: 2
+  allowed_fails: 2
+  cooldown_time: 30
+  # 实测有效的真正容灾降级链路
+  fallbacks:
+    - architect-model: ["architect-model-backup", "architect-model-fast"]
+    - coder-model: ["coder-model-backup"]
+
+litellm_settings:
+  drop_params: true
+  set_verbose: false

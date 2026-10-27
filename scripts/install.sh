@@ -91,12 +91,16 @@ chmod +x "${TARGET_DIR}/scripts/audit-diffs.sh"
 
 # 4. 根据模式分流安装
 if [ "${MODE}" = "full" ] || [ "${MODE}" = "solo" ]; then
-    log_info "--> 部署 Solo 版 Git Worktree 调度器与配置..."
+    log_info "--> 部署 Solo 版 Git Worktree 调度器与 LiteLLM 服务管理脚本..."
     cp "${SOURCE_ROOT}/scripts/solo-worktree.sh" "${TARGET_DIR}/scripts/"
     chmod +x "${TARGET_DIR}/scripts/solo-worktree.sh"
+    cp "${SOURCE_ROOT}/scripts/litellm-service.sh" "${TARGET_DIR}/scripts/"
+    chmod +x "${TARGET_DIR}/scripts/litellm-service.sh"
     
-    mkdir -p "${TARGET_DIR}/configs/solo"
-    cp -r "${SOURCE_ROOT}/configs/solo/." "${TARGET_DIR}/configs/solo/"
+    mkdir -p "${TARGET_DIR}/configs"
+    cp "${SOURCE_ROOT}/configs/litellm.yaml" "${TARGET_DIR}/configs/"
+    cp "${SOURCE_ROOT}/configs/.aider.conf.yml" "${TARGET_DIR}/configs/"
+    cp "${SOURCE_ROOT}/configs/docker-compose.yml" "${TARGET_DIR}/configs/"
 fi
 
 if [ "${MODE}" = "full" ]; then
@@ -114,10 +118,10 @@ if [ "${MODE}" = "full" ]; then
 
     log_info "--> 部署 MCP 客户端配置文件 (configs/mcp.json)..."
     cp "${SOURCE_ROOT}/configs/mcp.json" "${TARGET_DIR}/configs/"
-
-    log_info "--> 部署方案一落地实操指南 (docs/SUPERVISOR_GUIDE.md)..."
+    log_info "--> 部署落地实操指南 (docs/SUPERVISOR_GUIDE.md, docs/LITELLM_GUIDE.md)..."
     mkdir -p "${TARGET_DIR}/docs"
     cp "${SOURCE_ROOT}/docs/SUPERVISOR_GUIDE.md" "${TARGET_DIR}/docs/"
+    cp "${SOURCE_ROOT}/docs/LITELLM_GUIDE.md" "${TARGET_DIR}/docs/"
 
     log_info "--> 部署自动化验证测试套件 (tests/test_ai_native_suite.py)..."
     mkdir -p "${TARGET_DIR}/tests"
@@ -141,6 +145,7 @@ append_ignore_if_missing ".audit/"
 append_ignore_if_missing "circuit_breaker_*.json"
 append_ignore_if_missing "*.db"
 append_ignore_if_missing "__pycache__/"
+append_ignore_if_missing ".litellm/"
 
 # 6. 环境快速自检
 log_info "--> 执行运行环境自检..."
@@ -171,9 +176,9 @@ if [ "${MODE}" = "full" ]; then
     echo "2. 挂载 MCP 服务到 Claude Code / Cursor:"
     echo "   配置文件路径: ${TARGET_DIR}/configs/mcp.json"
     echo ""
-    echo "3. 查看方案一专属落地实操指南:"
-    echo "   📖 ${TARGET_DIR}/docs/SUPERVISOR_GUIDE.md"
-    echo ""
+    echo "3. 查看落地实操指南:"
+    echo "   📖 状态机指南: ${TARGET_DIR}/docs/SUPERVISOR_GUIDE.md"
+    echo "   📖 LiteLLM 网关: ${TARGET_DIR}/docs/LITELLM_GUIDE.md"
 fi
 echo "4. 启动 Solo 版 Worktree 多任务并行车间:"
 echo "   cd ${TARGET_DIR}"

@@ -1,0 +1,27 @@
+# ==============================================================================
+# configs/.aider.conf.yml - Aider 统一配置文件
+# ==============================================================================
+
+# 默认直连本地 LiteLLM 统一网关 (:4000)
+openai-api-base: http://localhost:4000/v1
+openai-api-key: sk-1d307c0eb1dc6106851fe89bd3aff3534757d4aa0d9fcc954b89461fe8e507a5
+
+# 8:2 双模型架构师分工
+model: openai/coder-model               # 默认代码实现走本地 0 边际成本模型
+architect-model: openai/architect-model # 顶层架构思考走云端重推理旗舰
+editor-model: openai/coder-model        # 编辑器应用代码走本地模型
+architect: true
+
+# Git 与版本控制
+auto-commits: true
+dirty-commits: false
+attribute-author: true
+attribute-committer: true
+
+# 缓存与性能
+cache-prompts: true
+map-tokens: 2048
+
+# 视觉与显示
+dark-mode: true
+show-diffs: true

@@ -11,8 +11,9 @@
 | 方案分类 | 定位与核心价值 | 核心技术栈 / 工具矩阵 | 核心资产与落地文档 |
 | :--- | :--- | :--- | :--- |
 | **1. 终态目标蓝图与实现**<br>*(Blueprint & Engine)* | 1 名人类架构师 + 4 专职 Agent 协同编排 + MCP 矩阵 + 混合算力底座的全生命周期实现 | 主控状态机调度器 + Planner / Coder / QA / DevOps 专职角色 + 熔断保护 + 安全 MCP | 📖 [目标蓝图文档](./ai_native.md)<br>📘 [Supervisor 落地指南](./docs/SUPERVISOR_GUIDE.md)<br>🕹️ 主控调度器 [`scripts/supervisor.py`](./scripts/supervisor.py)<br>🔌 MCP 矩阵 [`mcp_servers/`](./mcp_servers/) |
-| **2. 个人落地指南 (阶段一)**<br>*(Solo Edition)* | 单兵多任务物理隔离并行、TDD 单测自愈闭环、本地模型分流降低算力账单 | **Aider + LiteLLM + 本地 LMStudio + Git Worktree** | 📖 [Solo Edition 指南](./docs/SOLO_EDITION_GUIDE.md)<br>🛠️ 调度器 [`scripts/solo-worktree.sh`](./scripts/solo-worktree.sh)<br>⚙️ 配置 [`configs/solo/`](./configs/solo/) |
-| **3. 企业级安全合规**<br>*(Enterprise Edition)* | 面向产研团队的统一安全审计、容器沙盒权限收敛与 CI 反作弊双阶段质量门禁 | **LiteLLM Proxy (PG 审计) + OpenHands 容器沙盒 + CI 门禁** | 📖 [Enterprise 指南](./docs/ENTERPRISE_EDITION_GUIDE.md)<br>🐳 沙盒部署 [`deploy_openhands.sh`](./deploy_openhands.sh)<br>🛡️ 门禁脚本 [`scripts/audit-diffs.sh`](./scripts/audit-diffs.sh)<br>⚙️ 部署配置 [`configs/enterprise/`](./configs/enterprise/) |
+| **2. 个人落地指南 (阶段一)**<br>*(Solo Edition)* | 单兵多任务物理隔离并行、TDD 单测自愈闭环、本地模型分流降低算力账单 | **Aider + LiteLLM + 本地 LMStudio + Git Worktree** | 📖 [Solo Edition 指南](./docs/SOLO_EDITION_GUIDE.md)<br>🛠️ 调度器 [`scripts/solo-worktree.sh`](./scripts/solo-worktree.sh)<br>⚙️ 配置 [`configs/.aider.conf.yml`](./configs/.aider.conf.yml) |
+| **3. 企业级安全合规**<br>*(Enterprise Edition)* | 面向产研团队的统一安全审计、容器沙盒权限收敛与 CI 反作弊双阶段质量门禁 | **LiteLLM Proxy (PG 审计) + OpenHands 容器沙盒 + CI 门禁** | 📖 [Enterprise 指南](./docs/ENTERPRISE_EDITION_GUIDE.md)<br>🐳 沙盒部署 [`deploy_openhands.sh`](./deploy_openhands.sh)<br>🛡️ 门禁脚本 [`scripts/audit-diffs.sh`](./scripts/audit-diffs.sh)<br>⚙️ 部署配置 [`configs/docker-compose.yml`](./configs/docker-compose.yml) |
+| **4. 统一模型网关**<br>*(Model Gateway)* | 统一协议归一化、8:2 混合算力路由、容灾降级、虚拟 Key 预算熔断与全量数据库审计 | **LiteLLM Proxy (本地常驻 / 容器 Compose + PG)** | 📖 [LiteLLM 网关指南](./docs/LITELLM_GUIDE.md)<br>⚙️ 统一配置 [`configs/litellm.yaml`](./configs/litellm.yaml)<br>🐳 容器栈 [`configs/docker-compose.yml`](./configs/docker-compose.yml) |
 
 ---
 
@@ -70,9 +71,8 @@ python3 scripts/supervisor.py status --task-id TASK-101
   ```
 * **开箱即用**：
   ```bash
-  # 1. 启动本地混合网关
-  litellm --config configs/solo/litellm.yaml --port 4000
-
+  # 1. 启动本地统一混合网关
+  litellm --config configs/litellm.yaml --port 4000
   # 2. 一键拉起隔离车间并启动 Aider 自动跑测 (自动跨工作区同步任务卡)
   ./scripts/solo-worktree.sh start 101-auth "pytest tests/"
 
@@ -97,9 +97,8 @@ python3 scripts/supervisor.py status --task-id TASK-101
   3. **CI/CD 反作弊双阶段质量门禁**：在 GitHub Actions / GitLab CI 中调用 [`scripts/audit-diffs.sh`](./scripts/audit-diffs.sh)，严格将业务改动（`code.diff`）与单测改动（`tests.diff`）物理切分，严防 Agent 恶意削弱断言。
 * **开箱即用**：
   ```bash
-  # 启动企业级审计代理与 PostgreSQL 数据库
-  cd configs/enterprise
-  docker compose -f docker-compose.enterprise.yml up -d
+  # 启动企业级审计网关与 PostgreSQL 数据库
+  docker compose -f configs/docker-compose.yml up -d
   ```
 * **详细落地**：查看 [`docs/ENTERPRISE_EDITION_GUIDE.md`](./docs/ENTERPRISE_EDITION_GUIDE.md)。
 
@@ -125,7 +124,9 @@ python3 tests/test_ai_native_suite.py
 ├── ai_native.md                        # 方案 1: AI-Native 超级个体全生命周期终态目标蓝图
 ├── docs/
 │   ├── SOLO_EDITION_GUIDE.md           # 方案 2: 个人超级个体落地指南 (Solo Edition)
-│   └── ENTERPRISE_EDITION_GUIDE.md     # 方案 3: 企业级安全合规落地指南 (Enterprise Edition)
+│   ├── ENTERPRISE_EDITION_GUIDE.md     # 方案 3: 企业级安全合规落地指南 (Enterprise Edition)
+│   ├── SUPERVISOR_GUIDE.md             # 方案 1: 主控状态机与落地指南
+│   └── LITELLM_GUIDE.md                # 统一模型网关实战指南 (Solo & Enterprise 双模)
 ├── scripts/
 │   ├── install.sh                      # 一键注入与部署脚本
 │   ├── supervisor.py                   # 方案 1: 主控状态机调度器 (四角色流转 + 熔断保护)
@@ -136,12 +137,9 @@ python3 tests/test_ai_native_suite.py
 │   └── infra_devops.py                 # 基础设施运维 MCP (防命令注入/截断/生产发布令牌)
 ├── configs/
 │   ├── mcp.json                        # MCP 客户端挂载配置文件 (Claude / Cursor / OpenCode)
-│   ├── solo/                           # 个人版配套配置
-│   │   ├── litellm.yaml                # 混合路由模型映射表 (本地 LMStudio + 云端 API)
-│   │   └── .aider.conf.yml             # Aider 自动化架构师模式与跑测预设
-│   └── enterprise/                     # 企业版配套配置
-│       ├── litellm.yaml                # 审计网关与虚拟 Key 配额定义
-│       └── docker-compose.enterprise.yml # LiteLLM Proxy + PostgreSQL 全量审计持久化
+│   ├── litellm.yaml                    # 统一模型网关配置 (8:2 混合路由与容灾降级)
+│   ├── .aider.conf.yml                 # Aider 自动化架构师模式与跑测预设
+│   └── docker-compose.yml              # LiteLLM Proxy + PostgreSQL 全量审计持久化栈
 ├── tasks/
 │   └── template.md                     # 原子任务契约卡规范模板 (Task Spec Contract)
 ├── tests/

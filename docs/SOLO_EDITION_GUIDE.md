@@ -10,7 +10,7 @@
 graph TD
     User[你: 人类架构师] -->|1. 任务契约 tasks/template.md| Dispatcher[scripts/solo-worktree.sh 调度器]
     
-    subgraph 本地并发工作车间
+    subgraph 本地并发工作车间 (Git Worktrees 物理隔离)
         Dispatcher -->|创建独立分支与物理目录| WT1[Worktree A: feat/101-auth]
         Dispatcher -->|创建独立分支与物理目录| WT2[Worktree B: fix/102-cache]
         
@@ -25,12 +25,17 @@ graph TD
     
     subgraph 混合算力底座 (目标约 8:2 分流)
         LiteLLM -->|架构拆解 / --architect (目标约 20% 流量)| Magpie[本地 Magpie 网关 :3425/v1<br/>Claude Sonnet 5.5 / GPT-6 Luna / Gemini 3.8]
-        LiteLLM -->|样板代码 / --editor-model (目标约 80% 流量)| LMStudio[本地 LMStudio: :1234/v1<br/>Qwen3.8 / Gemma4]
+        LiteLLM -->|样板代码 / --editor-model (目标约 80% 流量)| LMStudio[本地 LMStudio :1234/v1<br/>Qwen3.8 / Gemma4]
     end
 
     GateA & GateB -->|通过单测后合入主干| Audit[audit-diffs.sh 双阶段防作弊审查]
     Audit -->|人类 5 分钟复核放行| Main[Main 主干代码]
 ```
+
+> 💡 **为什么 Solo 模式收敛于 Aider，而不需要引入 OpenCode 等其他工具？**
+> 1. **原生双模型架构师分流 (`--architect`)**：Aider 是目前唯一在同一会话内原生支持“云端大模型负责架构设计 (`architect-model`) + 本地小模型负责代码落地 (`editor-model`)”的工具，完美契合 8:2 算力分流。
+> 2. **原生 TDD 单测自愈闭环 (`--test-cmd` & `--auto-test`)**：改完代码自动跑单测、报错自动抓 Traceback 修复直至全绿，无需人工复制粘贴报错日志。
+> 3. **原子化 Git 提交集成**：每次修改自动生成规范 Commit，与 `audit-diffs.sh` 反作弊门禁无缝衔接。
 
 ---
 
@@ -38,7 +43,7 @@ graph TD
 
 ### 1. 安装核心工具链
 ```bash
-# 1. 安装核心 Agent 与模型网关
+# 1. 安装核心 Agent (Aider) 与模型网关 (LiteLLM)
 uv tool install aider-chat
 uv tool install 'litellm[proxy]'
 
@@ -47,13 +52,13 @@ uv tool install 'litellm[proxy]'
 ```
 
 ### 2. 启动算力网关 (LiteLLM)
-使用仓库中预配置的 [`configs/solo/litellm.yaml`](../configs/solo/litellm.yaml)。
+使用仓库中预配置的 [`configs/litellm.yaml`](../configs/litellm.yaml)（详细机制与客户端接入请参阅 [LiteLLM 网关指南](./LITELLM_GUIDE.md)）。
 
 > 💡 **免 Key 认证说明**：云端重推理模型通过本地 **Magpie 网关**（`:3425/v1`）统一代理与会话保持，**无需在环境变量中配置任何云端 API Key**；日常代码改写由 **LMStudio**（`:1234/v1`）提供 0 边际成本算力。
 
 ```bash
 # 一键启动本地多模型代理网关
-litellm --config configs/solo/litellm.yaml --port 4000
+litellm --config configs/litellm.yaml --port 4000
 ```
 *提示：网关启动后，所有请求均通过 `http://localhost:4000/v1` 统一路由，自动完成云端重推理与本地低边际成本模型分流。*
 
@@ -76,11 +81,12 @@ litellm --config configs/solo/litellm.yaml --port 4000
 # 语法: ./scripts/solo-worktree.sh start <任务ID> [单测命令]
 ./scripts/solo-worktree.sh start 101-jwt-auth "pytest tests/test_auth.py -v"
 ```
-**加固机制**：
-1. 自动在 `../worktrees/101-jwt-auth` 创建物理隔离目录与 `feat/101-jwt-auth` 分支；
-2. **自动跨目录同步任务卡**：自动拷贝主分支刚创建的 `tasks/101-jwt-auth.md`，杜绝未提交文件在 Worktree 中找不到的问题；
-3. 自动挂载 `configs/solo/.aider.conf.yml` 启用双模型架构师模式；
-4. 绑定单测命令，激活 Aider 失败自动修复机制。
+**调度器加固机制**：
+1. 自动检测本地 LiteLLM 网关 (`:4000`) 是否运行，未运行则自动通过 `scripts/litellm-service.sh` 在后台常驻拉起；
+2. 自动在 `../worktrees/101-jwt-auth` 创建物理隔离目录与 `feat/101-jwt-auth` 分支；
+3. **自动跨目录同步任务卡**：自动拷贝主分支刚创建的 `tasks/101-jwt-auth.md`，杜绝未提交文件在 Worktree 中找不到的问题；
+4. **自动软链依赖目录**：自动建立 `node_modules`、`.venv`、`venv` 软链接，免去重复安装依赖；
+5. 自动挂载 `configs/.aider.conf.yml` 启用双模型架构师模式，并绑定单测命令激活失败自动自愈。
 
 ### 步骤 3：Aider 自动化编码与单测自愈
 在拉起的 Aider 会话中输入：

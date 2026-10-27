@@ -36,13 +36,12 @@ graph TD
 ## 二、 核心管控系统实施
 
 ### 1. 统一模型安全网关 (LiteLLM Proxy + PostgreSQL 审计)
-企业**严禁工程师直接在本地配置裸 API Key**。所有 Agent 统一指向企业内网网关。
+企业**严禁工程师直接在本地配置裸 API Key**。所有 Agent 统一指向企业内网网关（架构与多租户配置详见 [LiteLLM 网关指南](./LITELLM_GUIDE.md)）。
 
 #### 启动服务
-使用仓库配套的 [`configs/enterprise/docker-compose.enterprise.yml`](../configs/enterprise/docker-compose.enterprise.yml)：
+使用仓库配套的 [`configs/docker-compose.yml`](../configs/docker-compose.yml)：
 ```bash
-cd configs/enterprise
-docker compose -f docker-compose.enterprise.yml up -d
+docker compose -f configs/docker-compose.yml up -d
 ```
 
 #### 企业管控能力：

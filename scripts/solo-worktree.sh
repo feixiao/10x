@@ -52,6 +52,13 @@ cmd_start() {
     local target_dir="${WORKTREES_BASE}/${task_id}"
     local branch_name="feat/${task_id}"
 
+    # 0. 自动探活并在未启动时自动拉起常驻后台网关
+    if ! curl -s -m 1 "http://127.0.0.1:4000/health" >/dev/null 2>&1; then
+        if [ -x "${SCRIPT_DIR}/litellm-service.sh" ]; then
+            log_info "检测到 LiteLLM 网关 (:4000) 未在运行，自动在后台拉起常驻服务..."
+            "${SCRIPT_DIR}/litellm-service.sh" start >/dev/null 2>&1 || true
+        fi
+    fi
     if [ -d "${target_dir}" ]; then
         log_warn "工作目录已存在: ${target_dir}，直接切换进入..."
         cd "${target_dir}"
@@ -94,9 +101,11 @@ cmd_start() {
     if command -v aider >/dev/null 2>&1; then
         local aider_args=()
         
-        # 优先读取 configs/solo/.aider.conf.yml
-        if [ -f "${REPO_ROOT}/configs/solo/.aider.conf.yml" ]; then
-            aider_args+=("--config" "${REPO_ROOT}/configs/solo/.aider.conf.yml")
+        # 优先读取 configs/.aider.conf.yml 或 .aider.conf.yml
+        if [ -f "${REPO_ROOT}/configs/.aider.conf.yml" ]; then
+            aider_args+=("--config" "${REPO_ROOT}/configs/.aider.conf.yml")
+        elif [ -f "${REPO_ROOT}/.aider.conf.yml" ]; then
+            aider_args+=("--config" "${REPO_ROOT}/.aider.conf.yml")
         fi
 
         # 挂载自动单测门禁
@@ -111,7 +120,6 @@ cmd_start() {
         log_warn "未检测到已安装的 aider。已为你切入 Worktree 终端环境："
         echo "路径: ${target_dir}"
         echo "分支: ${branch_name}"
-        echo "你可以手动在此执行 Claude Code, OpenCode 或其他 CLI Agent。"
         if [ -t 0 ]; then
             ${SHELL:-bash}
         fi
