@@ -8,28 +8,28 @@
 
 ```mermaid
 graph TD
-    User[你: 人类架构师] -->|1. 任务契约 tasks/template.md| Dispatcher[scripts/solo-worktree.sh 调度器]
+    User["你: 人类架构师"] -->|"1. 任务契约 tasks/template.md"| Dispatcher["scripts/solo-worktree.sh 调度器"]
     
-    subgraph 本地并发工作车间 (Git Worktrees 物理隔离)
-        Dispatcher -->|创建独立分支与物理目录| WT1[Worktree A: feat/101-auth]
-        Dispatcher -->|创建独立分支与物理目录| WT2[Worktree B: fix/102-cache]
+    subgraph Workshop ["本地并发工作车间 (Git Worktrees 物理隔离)"]
+        Dispatcher -->|"创建独立分支与物理目录"| WT1["Worktree A: feat/101-auth"]
+        Dispatcher -->|"创建独立分支与物理目录"| WT2["Worktree B: fix/102-cache"]
         
-        WT1 -->|Aider 实例 A| SessionA[Aider --architect]
-        WT2 -->|Aider 实例 B| SessionB[Aider --architect]
+        WT1 -->|"Aider 实例 A"| SessionA["Aider --architect"]
+        WT2 -->|"Aider 实例 B"| SessionB["Aider --architect"]
         
-        SessionA -->|--test-cmd 自动跑测| GateA[本地单测自愈闭环]
-        SessionB -->|--test-cmd 自动跑测| GateB[本地单测自愈闭环]
+        SessionA -->|"--test-cmd 自动跑测"| GateA["本地单测自愈闭环"]
+        SessionB -->|"--test-cmd 自动跑测"| GateB["本地单测自愈闭环"]
     end
 
-    SessionA & SessionB -->|OpenAI 协议统一访问| LiteLLM[LiteLLM Proxy 本地网关 :4000]
+    SessionA & SessionB -->|"OpenAI 协议统一访问"| LiteLLM["LiteLLM Proxy 本地网关 :4000"]
     
-    subgraph 混合算力底座 (目标约 8:2 分流)
-        LiteLLM -->|架构拆解 / --architect (目标约 20% 流量)| Magpie[本地 Magpie 网关 :3425/v1<br/>Claude Sonnet 5.5 / GPT-6 Luna / Gemini 3.8]
-        LiteLLM -->|样板代码 / --editor-model (目标约 80% 流量)| LMStudio[本地 LMStudio :1234/v1<br/>Qwen3.8 / Gemma4]
+    subgraph ComputeBase ["混合算力底座 (目标约 8:2 分流)"]
+        LiteLLM -->|"架构拆解 / --architect (目标约 20% 流量)"| Magpie["本地 Magpie 网关 :3425/v1<br/>Claude Sonnet 5.5 / GPT-6 Luna / Gemini 3.8"]
+        LiteLLM -->|"样板代码 / --editor-model (目标约 80% 流量)"| LMStudio["本地 LMStudio :1234/v1<br/>Qwen3.8 / Gemma4"]
     end
 
-    GateA & GateB -->|通过单测后合入主干| Audit[audit-diffs.sh 双阶段防作弊审查]
-    Audit -->|人类 5 分钟复核放行| Main[Main 主干代码]
+    GateA & GateB -->|"通过单测后合入主干"| Audit["audit-diffs.sh 双阶段防作弊审查"]
+    Audit -->|"人类 5 分钟复核放行"| Main["Main 主干代码"]
 ```
 
 > 💡 **为什么 Solo 模式收敛于 Aider，而不需要引入 OpenCode 等其他工具？**

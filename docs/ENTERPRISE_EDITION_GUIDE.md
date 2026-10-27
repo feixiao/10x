@@ -8,27 +8,27 @@
 
 ```mermaid
 graph TD
-    Dev[工程师 / 业务提单] -->|1. 创建 Issue / 派发任务| GitPlatform[GitLab / GitHub]
-    GitPlatform -->|2. 调度执行| Sandbox[OpenHands 沙盒容器集群 / DevContainer]
+    Dev["工程师 / 业务提单"] -->|"1. 创建 Issue / 派发任务"| GitPlatform["GitLab / GitHub"]
+    GitPlatform -->|"2. 调度执行"| Sandbox["OpenHands 沙盒容器集群 / DevContainer"]
     
-    subgraph 企业安全隔离区 (DMZ)
-        Sandbox -->|模型调用 (统一受控出口)| LiteLLMProxy[企业 LiteLLM Proxy 网关]
-        LiteLLMProxy -->|团队虚拟 Key 鉴权| AuditDB[(PostgreSQL 全量审计库)]
-        LiteLLMProxy -->|PII 过滤 / 敏感字段脱敏| AIProviders[云端旗舰 API / 企业私有 vLLM 算力池]
+    subgraph DMZ ["企业安全隔离区 (DMZ)"]
+        Sandbox -->|"模型调用 (统一受控出口)"| LiteLLMProxy["企业 LiteLLM Proxy 网关"]
+        LiteLLMProxy -->|"团队虚拟 Key 鉴权"| AuditDB[("PostgreSQL 全量审计库")]
+        LiteLLMProxy -->|"PII 过滤 / 敏感字段脱敏"| AIProviders["云端旗舰 API / 企业私有 vLLM 算力池"]
         
-        Sandbox -->|业务巡检 (只读权限)| MCPGateway[受控 MCP 统一服务]
-        MCPGateway -->|只读从库 / 镜像库| StagingDB[(只读脱敏数据环境)]
+        Sandbox -->|"业务巡检 (只读权限)"| MCPGateway["受控 MCP 统一服务"]
+        MCPGateway -->|"只读从库 / 镜像库"| StagingDB[("只读脱敏数据环境")]
     end
 
-    Sandbox -->|3. 提交 Pull Request| CI[企业 CI/CD 自动化门禁]
+    Sandbox -->|"3. 提交 Pull Request"| CI["企业 CI/CD 自动化门禁"]
     
-    subgraph CI 强制验收流水线
-        CI -->|静态分析| Sonar[SonarQube / Detekt / Linter]
-        CI -->|物理隔离切分| AuditGate[audit-diffs.sh 差异分离检查]
-        AuditGate -->|阻断报警| TamperCheck[测试篡改与削弱扫描]
+    subgraph Pipeline ["CI 强制验收流水线"]
+        CI -->|"静态分析"| Sonar["SonarQube / Detekt / Linter"]
+        CI -->|"物理隔离切分"| AuditGate["audit-diffs.sh 差异分离检查"]
+        AuditGate -->|"阻断报警"| TamperCheck["测试篡改与削弱扫描"]
     end
 
-    CI -->|4. 全绿放行| TechLead[Tech Lead 人工双人复核合入]
+    CI -->|"4. 全绿放行"| TechLead["Tech Lead 人工双人复核合入"]
 ```
 
 ---

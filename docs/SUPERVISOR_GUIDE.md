@@ -8,29 +8,29 @@
 
 ```mermaid
 graph TD
-    Human[人类架构师] -->|1. 创建任务契约 spec.md| Supervisor[scripts/supervisor.py 主控状态机]
+    Human["人类架构师"] -->|"1. 创建任务契约 spec.md"| Supervisor["scripts/supervisor.py 主控状态机"]
     
-    subgraph 状态机生命周期调度
-        Supervisor -->|流转| S1[1. Planner Agent: 架构拆解]
-        S1 -->|生成 tasks.md| Appr1{人类架构审批}
-        Appr1 -->|批准放行| WT[创建独立 Git Worktree 隔离目录<br/>自动挂载 node_modules / .venv]
+    subgraph Lifecycle ["状态机生命周期调度"]
+        Supervisor -->|"流转"| S1["1. Planner Agent: 架构拆解"]
+        S1 -->|"生成 tasks.md"| Appr1{"人类架构审批"}
+        Appr1 -->|"批准放行"| WT["创建独立 Git Worktree 隔离目录<br/>自动挂载 node_modules / .venv"]
         
-        WT -->|流转| S2[2. Coder Agent: 隔离环境编码实现]
-        S2 -->|提交代码| S3[3. QA Agent: 确定性单测门禁]
+        WT -->|"流转"| S2["2. Coder Agent: 隔离环境编码实现"]
+        S2 -->|"提交代码"| S3["3. QA Agent: 确定性单测门禁"]
         
-        S3 -->|测试失败 (重试 < 3次)| S2
-        S3 -->|连续 3 次失败| Breaker[🚨 触发熔断器 CIRCUIT_BREAKER_BLOCKED<br/>保存 circuit_breaker_*.json 快照]
-        Breaker -.->|人类排查后 supervisor unblock| S2
+        S3 -->|"测试失败 (重试 < 3次)"| S2
+        S3 -->|"连续 3 次失败"| Breaker["🚨 触发熔断器 CIRCUIT_BREAKER_BLOCKED<br/>保存 circuit_breaker_*.json 快照"]
+        Breaker -.->|"人类排查后 supervisor unblock"| S2
         
-        S3 -->|测试通过| S4[3.1 QA 审计员: audit-diffs.sh<br/>物理切分 code.diff 与 tests.diff]
-        S4 -->|流转| S5[4. DevOps Agent: 生产预检与健康检查]
-        S5 --> Appr2{人类发布终审}
-        Appr2 -->|批准放行| Done[COMPLETED: 合入主干完成闭环]
+        S3 -->|"测试通过"| S4["3.1 QA 审计员: audit-diffs.sh<br/>物理切分 code.diff 与 tests.diff"]
+        S4 -->|"流转"| S5["4. DevOps Agent: 生产预检与健康检查"]
+        S5 --> Appr2{"人类发布终审"}
+        Appr2 -->|"批准放行"| Done["COMPLETED: 合入主干完成闭环"]
     end
 
-    subgraph 安全 MCP 矩阵感知 (configs/mcp.json)
-        S2 & S5 -.->|只读查询/防注入/强制LIMIT| BizMCP[biz_inspector.py]
-        S5 -.->|日志审计/生产发布令牌门禁| InfraMCP[infra_devops.py]
+    subgraph MCPMatrix ["安全 MCP 矩阵感知 (configs/mcp.json)"]
+        S2 & S5 -.->|"只读查询/防注入/强制LIMIT"| BizMCP["biz_inspector.py"]
+        S5 -.->|"日志审计/生产发布令牌门禁"| InfraMCP["infra_devops.py"]
     end
 ```
 

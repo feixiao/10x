@@ -22,37 +22,37 @@
 
 ```mermaid
 graph TD
-    subgraph 客户端与 Agent 矩阵 (Clients & Agents)
-        Aider[Aider CLI / --architect]
-        ClaudeCode[Claude Code CLI / claude]
-        OpenCode[OpenCode CLI / TUI]
-        OmpAgent[omp 编码助手]
-        OpenHands[OpenHands 容器沙盒]
-        Cursor[Cursor / VSCode / IDE]
-        Supervisor[主控状态机 scripts/supervisor.py]
+    subgraph ClientsMatrix ["客户端与 Agent 矩阵 (Clients & Agents)"]
+        Aider["Aider CLI / --architect"]
+        ClaudeCode["Claude Code CLI / claude"]
+        OpenCode["OpenCode CLI / TUI"]
+        OmpAgent["omp 编码助手"]
+        OpenHands["OpenHands 容器沙盒"]
+        Cursor["Cursor / VSCode / IDE"]
+        Supervisor["主控状态机 scripts/supervisor.py"]
     end
 
-    Aider & OpenCode & OmpAgent & OpenHands & Cursor & Supervisor -->|OpenAI 协议 :4000/v1| LiteLLMProxy[LiteLLM Proxy 网关服务]
-    ClaudeCode -->|Anthropic 协议 :4000/v1/messages| LiteLLMProxy
+    Aider & OpenCode & OmpAgent & OpenHands & Cursor & Supervisor -->|"OpenAI 协议 :4000/v1"| LiteLLMProxy["LiteLLM Proxy 网关服务"]
+    ClaudeCode -->|"Anthropic 协议 :4000/v1/messages"| LiteLLMProxy
 
-    subgraph LiteLLM 核心处理管道 (Gateway Pipeline)
-        LiteLLMProxy --> Protocol[双向协议转换 & 参数清洗<br>OpenAI / Anthropic / drop_params: true]
-        Protocol --> Auth[虚拟 Key 鉴权 & 预算限额<br>max_budget / TPM / RPM 拦截]
-        Auth --> SkillGuard[Skill 上下文治理 & PII 脱敏<br>Prompt 截断保护 / 敏感数据过滤]
-        SkillGuard --> Router[智能路由 & 负载均衡<br>latency / usage / fallback]
-        Router --> AuditHook[异步审计 Hook<br>success/failure_callback]
+    subgraph Pipeline ["LiteLLM 核心处理管道 (Gateway Pipeline)"]
+        LiteLLMProxy --> Protocol["双向协议转换 & 参数清洗<br>OpenAI / Anthropic / drop_params: true"]
+        Protocol --> Auth["虚拟 Key 鉴权 & 预算限额<br>max_budget / TPM / RPM 拦截"]
+        Auth --> SkillGuard["Skill 上下文治理 & PII 脱敏<br>Prompt 截断保护 / 敏感数据过滤"]
+        SkillGuard --> Router["智能路由 & 负载均衡<br>latency / usage / fallback"]
+        Router --> AuditHook["异步审计 Hook<br>success/failure_callback"]
     end
 
-    subgraph 存储与合规层 (Persistence)
-        AuditHook --> Postgres[(PostgreSQL 审计库<br>LiteLLM_SpendLogs / Users)]
-        AuditHook -.-> Webhook[Slack / 企业微信 告警]
+    subgraph Persistence ["存储与合规层 (Persistence)"]
+        AuditHook --> Postgres[("PostgreSQL 审计库<br>LiteLLM_SpendLogs / Users")]
+        AuditHook -.-> Webhook["Slack / 企业微信 告警"]
     end
 
-    subgraph 下游异构算力提供商 (Downstream Providers)
-        Router -->|架构拆解 / 顶层重推理 (20% 流量)| Magpie[本地 Magpie 网关 :3425<br>Claude Sonnet / GPT-6 / Gemini]
-        Router -->|代码编写 / 单测自愈 (80% 流量)| LMStudio[本地 LMStudio :1234<br>Qwen 2.5 / Gemma 4]
-        Router -->|企业私有算力| vLLM[企业内网 GPU 集群 :8000<br>vLLM / Ollama]
-        Router -->|商业云端 API| PublicCloud[Anthropic / DeepSeek / OpenAI]
+    subgraph Providers ["下游异构算力提供商 (Downstream Providers)"]
+        Router -->|"架构拆解 / 顶层重推理 (20% 流量)"| Magpie["本地 Magpie 网关 :3425<br>Claude Sonnet / GPT-6 / Gemini"]
+        Router -->|"代码编写 / 单测自愈 (80% 流量)"| LMStudio["本地 LMStudio :1234<br>Qwen 2.5 / Gemma 4"]
+        Router -->|"企业私有算力"| vLLM["企业内网 GPU 集群 :8000<br>vLLM / Ollama"]
+        Router -->|"商业云端 API"| PublicCloud["Anthropic / DeepSeek / OpenAI"]
     end
 ```
 
