@@ -85,6 +85,7 @@ class TaskBuilder:
     def try_ai_generate_spec(self, title: str, desc: str, test_cmd: str) -> Optional[str]:
         """尝试调用本地 LiteLLM 网关 (:4000) 自动推导架构边界与细化契约"""
         gateway_url = "http://127.0.0.1:4000/v1/chat/completions"
+        api_key = os.environ.get("OPENAI_API_KEY", "sk-1d307c0eb1dc6106851fe89bd3aff3534757d4aa0d9fcc954b89461fe8e507a5")
         system_prompt = (
             "你是一位资深系统架构师。请根据用户的一句话需求，细化为一份严谨的 Task 任务契约。\n"
             "必须包含四个核心小节：\n"
@@ -97,12 +98,12 @@ class TaskBuilder:
         user_prompt = f"需求标题: {title}\n需求补充说明: {desc}\n推荐单测命令: {test_cmd}"
 
         payload = {
-            "model": "openai/coder-model",
+            "model": "architect-model",
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            "max_tokens": 1000,
+            "max_tokens": 1500,
             "temperature": 0.2
         }
 
@@ -110,10 +111,10 @@ class TaskBuilder:
             req = urllib.request.Request(
                 gateway_url,
                 data=json.dumps(payload).encode("utf-8"),
-                headers={"Content-Type": "application/json", "Authorization": "Bearer sk-1234"},
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
                 method="POST"
             )
-            with urllib.request.urlopen(req, timeout=3.5) as resp:
+            with urllib.request.urlopen(req, timeout=8.0) as resp:
                 if resp.status == 200:
                     result = json.loads(resp.read().decode("utf-8"))
                     choices = result.get("choices", [])
@@ -124,6 +125,98 @@ class TaskBuilder:
             return None
 
         return None
+
+    def plan_epic(self, title: str, desc: str = "") -> str:
+        """针对大需求执行多切片架构拆解 (Epic Slicing)"""
+        detected_test = self.detect_test_command()
+        cli_prefix = "./.10x/10x" if (self.repo_root / ".10x").is_dir() else "./scripts/solo-worktree.sh"
+
+        print(f"\n=======================================================")
+        print(f"🎯 AI 架构师正在分析并拆解大需求: {title}")
+        print(f"   (使用本地 architect-model 顶层重推理进行切片规划...)")
+        print(f"=======================================================\n")
+
+        gateway_url = "http://127.0.0.1:4000/v1/chat/completions"
+        api_key = os.environ.get("OPENAI_API_KEY", "sk-1d307c0eb1dc6106851fe89bd3aff3534757d4aa0d9fcc954b89461fe8e507a5")
+        system_prompt = (
+            "你是一位资深系统架构总监。用户提出了一个较庞大的软件功能大需求（Epic）。\n"
+            "在 AI-Native 与 TDD 规范下，严禁一次性堆叠海量代码，必须将大需求拆解为 2~4 个由浅入深、单个改动 <= 150 行、具备确定性单测验证的独立原子切片 (Task Slices)。\n"
+            f"当前工程自动化单测框架为: `{detected_test}`，统一执行入口命令前缀为: `{cli_prefix}`。\n"
+            "请直接输出 Markdown 格式的拆解规划，结构必须清晰规范：\n"
+            "## 1. 架构拆解思路\n(简述分几步走，各切片依赖关系)\n\n"
+            "## 2. 原子任务切片清单 (Task Slices)\n"
+            "### 切片 1: <建议task-id，如 101-pay-core> - <切片标题>\n"
+            "- **核心目标**: ...\n"
+            "- **预期新增/改动文件**: ...\n"
+            "- **验收单测命令**: `<单测命令>`\n"
+            f"- **一键启动命令**: `{cli_prefix} quick <task-id> \"<简短需求>\" \"<单测命令>\"`\n\n"
+            "### 切片 2: ...\n\n"
+            "## 3. 推荐交付顺序与操作建议\n"
+            "说明先跑哪一个车间、合入主干后再拉起下一个车间。"
+        )
+        user_prompt = f"大需求标题: {title}\n补充说明: {desc}"
+        payload = {
+            "model": "architect-model",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            "max_tokens": 2048,
+            "temperature": 0.2
+        }
+
+        content = None
+        try:
+            req = urllib.request.Request(
+                gateway_url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=20.0) as resp:
+                if resp.status == 200:
+                    result = json.loads(resp.read().decode("utf-8"))
+                    choices = result.get("choices", [])
+                    if choices:
+                        content = choices[0]["message"]["content"].strip()
+        except Exception:
+            pass
+
+        if not content:
+            content = f"""## 1. 架构拆解思路
+大需求 `{title}` 建议拆解为 3 个原子切片，分层递进实现：
+1. **地基切片**：数据模型、网关抽象接口与状态机（纯 Mock 单元测试）；
+2. **渠道适配切片**：微信支付与支付宝具体通道实现；
+3. **API 接入切片**：对外 Web 路由端点与异步通知 WebHook。
+
+## 2. 原子任务切片清单 (Task Slices)
+### 切片 1: 101-payment-core - 支付核心模型与网关接口
+- **核心目标**: 定义统一订单状态机与支付抽象网关接口
+- **验收单测命令**: `{detected_test} tests/test_payment_core.py`
+- **一键启动命令**: `{cli_prefix} quick 101-payment-core "实现统一支付抽象网关接口与状态机" "{detected_test} tests/test_payment_core.py"`
+
+### 切片 2: 102-payment-channels - 微信支付与支付宝通道适配
+- **核心目标**: 实现微信与支付宝的具体加签、验签与下单
+- **验收单测命令**: `{detected_test} tests/test_payment_channels.py`
+- **一键启动命令**: `{cli_prefix} quick 102-payment-channels "实现微信与支付宝通道适配与验签" "{detected_test} tests/test_payment_channels.py"`
+
+### 切片 3: 103-payment-api - Web API 路由与回调通知端点
+- **核心目标**: 暴露下单接口与异步回调通知验签入口
+- **验收单测命令**: `{detected_test} tests/test_payment_api.py`
+- **一键启动命令**: `{cli_prefix} quick 103-payment-api "暴露支付创建与回调API端点" "{detected_test} tests/test_payment_api.py"`
+
+## 3. 推荐交付顺序与操作建议
+从**切片 1**开始启动车间，测试通过并通过 `audit` 后合入主干，再依次推进后续切片。
+"""
+
+        print(content)
+        plan_file = self.tasks_dir / f"plan-{datetime.now().strftime('%m%d-%H%M')}.md"
+        plan_file.write_text(content, encoding="utf-8")
+        print(f"\n=======================================================")
+        print(f"📄 架构拆解规划已落盘保存至: {plan_file}")
+        print(f"👉 复制上述切片 1 的启动命令即可立刻开始第一阶段！")
+        print(f"=======================================================\n")
+        return content
 
     def build_deterministic_spec(
         self,
@@ -306,10 +399,20 @@ def main():
     p_quick.add_argument("title", help="一句话需求描述")
     p_quick.add_argument("test_cmd", nargs="?", default="", help="可选的单测命令，未指定时自动嗅探")
     p_quick.add_argument("--no-ai", action="store_true", help="跳过 AI 智能推导，强制使用静态确定性模板")
+    # plan
+    p_plan = subparsers.add_parser("plan", help="宏观大需求智能切片架构规划 (Epic Slicing)")
+    p_plan.add_argument("title", help="宏观大需求描述，如: '对接支付功能 微信支付和支付宝就好'")
+    p_plan.add_argument("desc", nargs="?", default="", help="需求补充说明")
 
     # wizard
     subparsers.add_parser("wizard", help="进入交互式问答向导")
 
+    args = parser.parse_args()
+    builder = TaskBuilder()
+
+    if args.command == "plan":
+        builder.plan_epic(args.title, args.desc)
+        return
     args = parser.parse_args()
     builder = TaskBuilder()
 

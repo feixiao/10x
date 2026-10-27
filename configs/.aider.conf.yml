@@ -4,7 +4,7 @@
 
 # 默认直连本地 LiteLLM 统一网关 (:4000)
 openai-api-base: http://localhost:4000/v1
-openai-api-key: sk-dummy
+openai-api-key: sk-1d307c0eb1dc6106851fe89bd3aff3534757d4aa0d9fcc954b89461fe8e507a5
 
 # 8:2 双模型架构师分工 (在 architect 模式下，model 即为架构师主模型)
 model: openai/architect-model          # 顶层架构思考走云端重推理旗舰

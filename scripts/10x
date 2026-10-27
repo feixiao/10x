@@ -20,6 +20,7 @@ usage() {
 10x AI-Native 统一调度中枢 (Non-Intrusive Centralized Edition)
 
 常用指令:
+  $0 plan "<宏观大需求>"                       AI 架构师智能拆解大需求为原子切片清单 (大功能必选)
   $0 quick <task-id> "<一句话需求>" [单测命令]   一键生成契约卡并拉起独立车间 (推荐)
   $0 new                                      启动 3 步交互问答向导创建任务
   $0 start <task-id> [单测命令]                启动指定任务的工作车间
@@ -42,6 +43,10 @@ EOF
 }
 
 case "${1:-}" in
+    plan)
+        shift
+        exec python3 "${BIN_DIR}/task_builder.py" plan "$@"
+        ;;
     quick|new|wizard|start|status|list|audit|close)
         exec "${BIN_DIR}/solo-worktree.sh" "$@"
         ;;

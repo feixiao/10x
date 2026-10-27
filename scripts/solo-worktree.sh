@@ -138,7 +138,7 @@ cmd_start() {
         
         # 强制锁定本地 LiteLLM 网关 (:4000)，严禁回退弹窗至 OpenRouter
         export OPENAI_API_BASE="${OPENAI_API_BASE:-http://localhost:4000/v1}"
-        export OPENAI_API_KEY="${OPENAI_API_KEY:-sk-dummy}"
+        export OPENAI_API_KEY="${OPENAI_API_KEY:-sk-1d307c0eb1dc6106851fe89bd3aff3534757d4aa0d9fcc954b89461fe8e507a5}"
 
         # 优先读取集中化目录配置 .10x/configs/.aider.conf.yml
         if [ -f "${CONFIGS_DIR}/.aider.conf.yml" ]; then
