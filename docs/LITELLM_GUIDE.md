@@ -204,10 +204,11 @@ cd ~/litellm-gateway && docker compose -f docker-compose.quickstart.yml up -d
 ```yaml
 model_list:
   # 1. 架构师主模型 (Magpie Claude 5.5，实测 1.1s)
+  # 容器访问宿主机外部服务必须使用 host.docker.internal
   - model_name: architect-model
     litellm_params:
       model: openai/antigravity/claude-sonnet-5-5
-      api_base: http://127.0.0.1:3425/v1
+      api_base: http://host.docker.internal:3425/v1
       api_key: dummy
       max_tokens: 8192
       timeout: 120
@@ -216,7 +217,7 @@ model_list:
   - model_name: architect-model-backup
     litellm_params:
       model: openai/codex/gpt-6-luna
-      api_base: http://127.0.0.1:3425/v1
+      api_base: http://host.docker.internal:3425/v1
       api_key: dummy
       max_tokens: 8192
       timeout: 120
@@ -225,11 +226,10 @@ model_list:
   - model_name: coder-model
     litellm_params:
       model: openai/qwen3.8-27b-splash
-      api_base: http://127.0.0.1:1234/v1
+      api_base: http://host.docker.internal:1234/v1
       api_key: dummy
       max_tokens: 8192
       timeout: 300
-
 router_settings:
   routing_strategy: latency-based-routing
   num_retries: 2
