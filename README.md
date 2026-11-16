@@ -14,6 +14,7 @@
 | **2. 个人落地指南 (阶段一)**<br>*(Solo Edition)* | 单兵多任务物理隔离并行、TDD 单测自愈闭环、本地模型分流降低算力账单 | **Aider + LiteLLM + 本地 LMStudio + Git Worktree** | 📖 [Solo Edition 指南](./docs/SOLO_EDITION_GUIDE.md)<br>🛠️ 调度器 [`scripts/solo-worktree.sh`](./scripts/solo-worktree.sh)<br>⚙️ 配置 [`configs/.aider.conf.yml`](./configs/.aider.conf.yml) |
 | **3. 企业级安全合规**<br>*(Enterprise Edition)* | 面向产研团队的统一安全审计、容器沙盒权限收敛与 CI 反作弊双阶段质量门禁 | **LiteLLM Proxy (PG 审计) + OpenHands 容器沙盒 + CI 门禁** | 📖 [Enterprise 指南](./docs/ENTERPRISE_EDITION_GUIDE.md)<br>🐳 沙盒部署 [`deploy_openhands.sh`](./deploy_openhands.sh)<br>🛡️ 门禁脚本 [`scripts/audit-diffs.sh`](./scripts/audit-diffs.sh)<br>⚙️ 部署配置 [`configs/docker-compose.yml`](./configs/docker-compose.yml) |
 | **4. 统一模型网关**<br>*(Model Gateway)* | 统一协议归一化、8:2 混合算力路由、容灾降级、虚拟 Key 预算熔断与全量数据库审计 | **LiteLLM Proxy (本地常驻 / 容器 Compose + PG)** | 📖 [LiteLLM 网关指南](./docs/LITELLM_GUIDE.md)<br>⚙️ 统一配置 [`configs/litellm.yaml`](./configs/litellm.yaml)<br>🐳 容器栈 [`configs/docker-compose.yml`](./configs/docker-compose.yml) |
+| **5. 协同阶梯演进方案研究**<br>*(Evolution Matrix)* | 解构 Level 2 到 Level 5 的演化机制、工程暗坑与终态架构（从结对辅助到系统化工程流） | **状态机中枢 + 资产化 Skills + MCP 矩阵 + 反作弊门禁 + 熔断器** | 📑 [协同阶梯演进方案研究](./docs/AI_COLLABORATION_LEVELS.md)<br>💡 [实战上手指南](./docs/PRACTICAL_WORKFLOW_GUIDE.md) |
 
 ---
 
